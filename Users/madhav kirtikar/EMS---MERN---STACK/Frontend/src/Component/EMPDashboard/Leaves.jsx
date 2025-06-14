@@ -116,6 +116,12 @@ const Leaves = ({ user }) => {
 
   return (
     <div className="max-w-3xl mx-auto mt-4 pb-8">
+      {/* Title same style as Settings/Calendar/Notifications */}
+      <h2 className="text-4xl font-extrabold text-center tracking-wide mb-10">
+        <span className="bg-gradient-to-r from-purple-500 via-blue-400 to-pink-400 bg-clip-text text-transparent drop-shadow">
+          Leaves
+        </span>
+      </h2>
       {/* FILTERS */}
       <div className="flex justify-center gap-3 flex-wrap mb-6">
         {FILTERS.map(f => (
@@ -134,11 +140,6 @@ const Leaves = ({ user }) => {
       </div>
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <h2 className="text-3xl font-extrabold text-purple-700 tracking-wide drop-shadow text-center md:text-left">
-          <span className="bg-gradient-to-r from-purple-500 via-blue-400 to-pink-400 bg-clip-text text-transparent">
-            Leaves
-          </span>
-        </h2>
         <div className="flex flex-wrap gap-3 justify-center md:justify-end">
           <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full shadow-sm text-sm font-semibold">
             Approved: {approvedCount}

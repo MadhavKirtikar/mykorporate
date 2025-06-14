@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+ import React, { useEffect, useState } from "react";
 import axios from "axios";
 
 const USE_DUMMY = true; // Jab backend aayega, sirf isko false kar dena
@@ -118,13 +118,14 @@ const Attendance = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-gradient-to-br from-purple-100 via-blue-50 to-white rounded-3xl shadow-2xl p-8 mt-10 border border-purple-200">
+    <div className=" ">
+      {/* Title same style as Settings/Calendar/Notifications/Leaves */}
+      <h2 className="text-4xl font-extrabold text-center tracking-wide mb-10">
+        <span className="bg-gradient-to-r from-purple-500 via-blue-400 to-pink-400 bg-clip-text text-transparent drop-shadow">
+          Attendance
+        </span>
+      </h2>
       <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
-        <h2 className="text-3xl font-extrabold text-purple-700 flex items-center gap-2 drop-shadow">
-          <span className="bg-gradient-to-r from-purple-500 via-blue-400 to-pink-400 bg-clip-text text-transparent">
-            My Attendance
-          </span>
-        </h2>
         <div className="flex-1 flex flex-wrap gap-2 md:justify-end">
           <button
             className="px-4 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200 transition"
@@ -256,7 +257,7 @@ const Attendance = () => {
         </div>
       )}
       <div className="text-xs text-gray-400 mt-6 text-center">
-       </div>
+      </div>
     </div>
   );
 };

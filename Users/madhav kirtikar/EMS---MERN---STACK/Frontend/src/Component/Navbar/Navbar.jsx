@@ -21,13 +21,23 @@ const Navbar = () => {
   const [results, setResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+
+  // Auth state: will work with localStorage now, and with backend later
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("role"));
+  const [userRole, setUserRole] = useState(localStorage.getItem("role") || null);
+  const [userName, setUserName] = useState(localStorage.getItem("name") || "");
+
   const navigate = useNavigate();
   const location = useLocation();
 
+  // This effect will work with both localStorage and future backend
   useEffect(() => {
+    // In future, you can replace this with backend user fetch
     const role = localStorage.getItem("role");
+    const name = localStorage.getItem("name") || "";
     setIsLoggedIn(role === "admin" || role === "employee");
+    setUserRole(role);
+    setUserName(name);
   }, [location.pathname]);
 
   const handleSearch = (e) => {
@@ -52,11 +62,20 @@ const Navbar = () => {
     navigate(path);
   };
 
-  // Optional: Logout button for demo (remove if not needed)
   const handleLogout = () => {
     localStorage.removeItem("role");
+    localStorage.removeItem("name");
     setIsLoggedIn(false);
+    setUserRole(null);
+    setUserName("");
     navigate("/");
+  };
+
+  // 👇 Get display name based on role and name
+  const getDisplayName = () => {
+    if (userRole === "admin") return userName ? `Admin (${userName})` : "Admin";
+    if (userRole === "employee") return userName ? `Employee (${userName})` : "Employee";
+    return null;
   };
 
   return (
@@ -70,11 +89,18 @@ const Navbar = () => {
         <li>
           <Link to="/" className="font-extrabold text-lg tracking-wide px-3 py-1 rounded transition-all duration-200 text-white hover:scale-110 hover:bg-white/20">Home</Link>
         </li>
-        {!isLoggedIn && (
-          <li>
-            <Link to="/login" className="font-extrabold text-lg tracking-wide px-3 py-1 rounded transition-all duration-200 text-white hover:scale-110 hover:bg-white/20">Login/Register</Link>
-          </li>
-        )}
+        {/* 👇 Show Admin/Employee name or Login/Register */}
+        <li>
+          {!isLoggedIn ? (
+            <Link to="/login" className="font-extrabold text-lg tracking-wide px-3 py-1 rounded transition-all duration-200 text-white hover:scale-110 hover:bg-white/20">
+              Login/Register
+            </Link>
+          ) : (
+            <span className="font-extrabold text-lg tracking-wide px-3 py-1 rounded transition-all duration-200 text-yellow-200 bg-blue-900/40">
+              {getDisplayName()}
+            </span>
+          )}
+        </li>
         <li>
           <Link to="/about" className="font-extrabold text-lg tracking-wide px-3 py-1 rounded transition-all duration-200 text-white hover:scale-110 hover:bg-white/20">About Us</Link>
         </li>

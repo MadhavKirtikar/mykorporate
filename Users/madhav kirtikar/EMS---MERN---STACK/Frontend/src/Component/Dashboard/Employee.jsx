@@ -287,19 +287,7 @@ const Employee = () => {
                   </h2>
                   <table className="w-full mb-4">
                     <tbody>
-                      <tr>
-                        <td className="pr-2 py-2 font-semibold text-gray-700 w-32">Employee ID</td>
-                        <td>
-                          <input
-                            type="text"
-                            name="id"
-                            value={editMode ? form.id : "Auto"}
-                            readOnly
-                            className="border rounded px-3 py-2 bg-gray-100 w-full"
-                            tabIndex={-1}
-                          />
-                        </td>
-                      </tr>
+                      
                       <tr>
                         <td className="pr-2 py-2 font-semibold text-gray-700">Name</td>
                         <td>

@@ -1,7 +1,50 @@
- import React from 'react';
+ import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 
 const EmployeeSidebar = ({ user }) => {
+  const [profileImg, setProfileImg] = useState(
+    localStorage.getItem("profile") ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "Employee")}&background=8b5cf6&color=fff`
+  );
+
+  // Listen for profile changes in localStorage (Settings page updates)
+  useEffect(() => {
+    // Update profile image on mount and when user.name changes
+    setProfileImg(
+      localStorage.getItem("profile") ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "Employee")}&background=8b5cf6&color=fff`
+    );
+
+    // Listen for profile changes in localStorage (even from other tabs)
+    const onStorage = (e) => {
+      if (e.key === "profile") {
+        setProfileImg(
+          e.newValue ||
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "Employee")}&background=8b5cf6&color=fff`
+        );
+      }
+    };
+    window.addEventListener("storage", onStorage);
+
+    // Listen for profile changes in the same tab (Settings page)
+    const interval = setInterval(() => {
+      const current = localStorage.getItem("profile");
+      setProfileImg(prev =>
+        prev !== current && current
+          ? current
+          : prev === "" && current
+          ? current
+          : prev
+      );
+    }, 500);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      clearInterval(interval);
+    };
+    // eslint-disable-next-line
+  }, [user?.name]);
+
   if (!user) return null;
 
   const links = [
@@ -18,9 +61,11 @@ const EmployeeSidebar = ({ user }) => {
   return (
     <aside className="hidden md:flex flex-col w-72 min-h-screen shadow-2xl border-r-4 border-cyan-200">
       <div className="flex flex-col items-center py-12 mb-10">
-        <div className="w-28 h-28 rounded-full bg-gradient-to-br from-cyan-300 via-blue-200 to-white flex items-center justify-center text-4xl font-extrabold text-teal-700 shadow-lg border-4 border-white">
-          {user?.name?.[0] || "E"}
-        </div>
+        <img
+          src={profileImg}
+          alt="Profile"
+          className="w-28 h-28 rounded-full bg-gradient-to-br from-cyan-300 via-blue-200 to-white border-4 border-white shadow-lg object-cover"
+        />
         <div className="mt-6 font-extrabold text-2xl text-teal-700">{user?.name || "Employee"}</div>
         <div className="text-sm text-orange-400 font-semibold tracking-widest uppercase">Employee</div>
       </div>

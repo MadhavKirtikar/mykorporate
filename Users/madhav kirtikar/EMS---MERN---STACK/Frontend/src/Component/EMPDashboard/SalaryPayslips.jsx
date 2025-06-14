@@ -2,7 +2,6 @@
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
-
 // Dummy payslip data for frontend testing
 const DUMMY_PAYSLIPS = [
   {
@@ -113,9 +112,12 @@ const SalaryPayslips = ({ user }) => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto rounded-3xl shadow-2xl p-8 mt-8 bg-white">
-      <h2 className="text-3xl font-extrabold text-transparent bg-gradient-to-r from-purple-600 via-blue-500 to-purple-400 bg-clip-text drop-shadow-lg mb-8 text-center tracking-wide uppercase">
-        Salary & Payslips
+    <div className="max-w-3xl mx-auto rounded-3xl shadow-2xl p-8 mt-8" /* bg-white removed */>
+      {/* Title same style as Settings/Calendar/Notifications/Leaves */}
+      <h2 className="text-4xl font-extrabold text-center tracking-wide mb-10">
+        <span className="bg-gradient-to-r from-purple-500 via-blue-400 to-pink-400 bg-clip-text text-transparent drop-shadow">
+          Salary & Payslips
+        </span>
       </h2>
 
       {/* Attendance Percentage */}
@@ -179,7 +181,7 @@ const SalaryPayslips = ({ user }) => {
       </div>
 
       <div className="overflow-x-auto rounded-2xl shadow-lg">
-        <table className="min-w-full bg-white rounded-xl">
+        <table className="min-w-full rounded-xl">
           <thead>
             <tr>
               <th className="py-3 px-4 text-left text-purple-700 text-sm font-bold uppercase">Month</th>
@@ -238,10 +240,9 @@ const SalaryPayslips = ({ user }) => {
 const PayslipSlip = React.forwardRef(({ user, payslip }, ref) => (
   <div
     ref={ref}
-    className="w-[600px] mx-auto bg-white rounded-2xl shadow-2xl border-2 border-purple-200 p-10 font-sans"
+    className=" "
     style={{
-      fontFamily: "Inter, sans-serif",
-      color: "#3B256D",
+      
     }}
   >
     {/* Header with company name and logo */}
@@ -289,8 +290,7 @@ const PayslipSlip = React.forwardRef(({ user, payslip }, ref) => (
         <span className="font-semibold text-purple-700">Department:</span>
         <span className="ml-2 text-gray-800">{user.department || "-"}</span>
       </div>
-      
-      </div>
+    </div>
     {/* Salary Table */}
     <table className="w-full mb-8 text-base border border-purple-100 rounded-lg overflow-hidden">
       <thead>
@@ -326,10 +326,7 @@ const PayslipSlip = React.forwardRef(({ user, payslip }, ref) => (
     </table>
     {/* Footer */}
     <div className="flex flex-col md:flex-row items-center justify-between mt-6 gap-2">
-      <div>
-         
-        
-      </div>
+      <div></div>
       <div className="text-xs text-purple-400 font-semibold">
         Generated on: {new Date().toLocaleDateString("en-IN")}
       </div>

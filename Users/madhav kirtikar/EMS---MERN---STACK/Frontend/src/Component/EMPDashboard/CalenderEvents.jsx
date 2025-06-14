@@ -71,12 +71,14 @@ const CalenderEvents = ({ user }) => {
 
   return (
     <div className="max-w-3xl mx-auto mt-10">
+      {/* Title same style as Settings page */}
+      <h2 className="text-4xl font-extrabold text-center tracking-wide mb-10">
+        <span className="bg-gradient-to-r from-purple-500 via-blue-400 to-pink-400 bg-clip-text text-transparent drop-shadow">
+          Calender Events
+        </span>
+      </h2>
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-extrabold text-purple-700 tracking-wide drop-shadow">
-          <span className="bg-gradient-to-r from-purple-500 via-blue-400 to-pink-400 bg-clip-text text-transparent">
-            Calendar & Events
-          </span>
-        </h2>
+        {/* You can add user name or other info here if needed */}
       </div>
       {newEvent && (
         <div className="mb-6 p-4 rounded-xl bg-green-50 border border-green-200 flex items-center gap-4 shadow animate-pulse">
@@ -135,8 +137,7 @@ const CalenderEvents = ({ user }) => {
             )}
           </tbody>
         </table>
-        <div className="text-xs text-gray-400 mt-6 text-center pb-4">
-            </div>
+        <div className="text-xs text-gray-400 mt-6 text-center pb-4"></div>
       </div>
     </div>
   );
