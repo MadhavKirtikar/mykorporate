@@ -3,17 +3,22 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { NavLink, useLocation } from 'react-router-dom';
 
+// Helper to get initials from name
+function getInitials(name) {
+  if (!name) return "";
+  const parts = name.trim().split(" ");
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 // --- AdminSidebar Component (inline for this file) ---
-const AdminSidebar = ({ profilePicUrl }) => {
+const AdminSidebar = ({ profilePicUrl, adminNameProp }) => {
     const location = useLocation();
-    const profilePic =
-        profilePicUrl ||
-        localStorage.getItem("adminProfilePic") ||
-        "https://randomuser.me/api/portraits/men/32.jpg";
-    const [adminName, setAdminName] = useState(localStorage.getItem("adminName") || "Admin User");
+    const adminName = adminNameProp || localStorage.getItem("adminName") || "Admin User";
+    const [sidebarName, setSidebarName] = useState(adminName);
 
     useEffect(() => {
-        const updateName = () => setAdminName(localStorage.getItem("adminName") || "Admin User");
+        const updateName = () => setSidebarName(localStorage.getItem("adminName") || "Admin User");
         window.addEventListener("storage", updateName);
         const interval = setInterval(updateName, 500);
         return () => {
@@ -23,8 +28,11 @@ const AdminSidebar = ({ profilePicUrl }) => {
     }, []);
 
     useEffect(() => {
-        setAdminName(localStorage.getItem("adminName") || "Admin User");
+        setSidebarName(localStorage.getItem("adminName") || "Admin User");
     }, [location.pathname]);
+
+    // Show initials if no profilePicUrl
+    const showInitials = !profilePicUrl;
 
     return (
         <aside
@@ -36,16 +44,22 @@ const AdminSidebar = ({ profilePicUrl }) => {
             <div className="flex flex-col items-center border-b border-black/20 pb-4">
                 <div className="relative mb-2">
                     <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-blue-500 via-purple-500 to-blue-400 p-1 shadow-xl flex items-center justify-center">
-                        <img
-                            src={profilePic}
+                        {showInitials ? (
+                          <span className="w-28 h-28 rounded-full flex items-center justify-center bg-white text-4xl font-bold text-purple-600 border-4 border-white shadow-lg select-none">
+                            {getInitials(sidebarName)}
+                          </span>
+                        ) : (
+                          <img
+                            src={profilePicUrl}
                             alt="Admin"
                             className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg"
-                        />
+                          />
+                        )}
                         <span className="absolute bottom-3 right-3 w-5 h-5 bg-green-400 border-2 border-white rounded-full"></span>
                     </div>
                 </div>
                 <div className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-800 to-blue-500 bg-clip-text text-transparent drop-shadow-lg tracking-wide mt-2">
-                    {adminName}
+                    {sidebarName}
                 </div>
                 <div className="uppercase text-xs tracking-widest text-purple-700 font-semibold mt-1">
                     Admin Dashboard
@@ -138,6 +152,20 @@ const AdminSidebar = ({ profilePicUrl }) => {
 };
 // --- End AdminSidebar ---
 
+const USE_DUMMY = true; // true: dummy data, false: backend data
+
+const DUMMY_PROFILE = {
+  name: "Admin User",
+  email: "admin@demo.com",
+};
+const DUMMY_NOTIF = {
+  email: true,
+  sms: false,
+  push: true,
+};
+const DUMMY_LAST_LOGIN = "2025-06-16 10:30 AM";
+const DUMMY_PROFILE_PIC = ""; // No default image, so initials will show
+
 const Settings = () => {
   const [show, setShow] = useState(false);
   const [profile, setProfile] = useState({ name: "", email: "" });
@@ -169,14 +197,23 @@ const Settings = () => {
 
   useEffect(() => {
     setShow(true);
-    // --- Backend fetch code ---
+    if (USE_DUMMY) {
+      setProfile(DUMMY_PROFILE);
+      setNotif(DUMMY_NOTIF);
+      setLastLoginTime(DUMMY_LAST_LOGIN);
+      setProfilePicUrl(DUMMY_PROFILE_PIC);
+      return;
+    }
     axios.get("/api/admin/profile").then(res => {
-      setProfile(res.data.profile);
-      setNotif(res.data.notif);
-      setLastLoginTime(res.data.lastLogin);
-      setProfilePicUrl(res.data.profilePicUrl);
+      setProfile(res.data?.profile || DUMMY_PROFILE);
+      setNotif(res.data?.notif || DUMMY_NOTIF);
+      setLastLoginTime(res.data?.lastLogin || DUMMY_LAST_LOGIN);
+      setProfilePicUrl(res.data?.profilePicUrl || DUMMY_PROFILE_PIC);
     }).catch(() => {
-      // fallback if needed
+      setProfile(DUMMY_PROFILE);
+      setNotif(DUMMY_NOTIF);
+      setLastLoginTime(DUMMY_LAST_LOGIN);
+      setProfilePicUrl(DUMMY_PROFILE_PIC);
     });
   }, []);
 
@@ -184,9 +221,14 @@ const Settings = () => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
-  // --- Update profile in backend ---
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
+    if (USE_DUMMY) {
+      setProfile(profile);
+      localStorage.setItem("adminName", profile.name);
+       
+      return;
+    }
     try {
       const res = await axios.put("/api/admin/profile", profile);
       setProfile(res.data.profile);
@@ -201,11 +243,15 @@ const Settings = () => {
     setPasswords({ ...passwords, [e.target.name]: e.target.value });
   };
 
-  // --- Update password in backend ---
   const handlePasswordUpdate = async (e) => {
     e.preventDefault();
     if (passwords.new !== passwords.confirm) {
       alert("Passwords do not match!");
+      return;
+    }
+    if (USE_DUMMY) {
+      setPasswords({ current: "", new: "", confirm: "" });
+      alert("Password changed! (Dummy)");
       return;
     }
     try {
@@ -223,6 +269,7 @@ const Settings = () => {
   const handleNotifChange = async (e) => {
     const { name, checked } = e.target;
     setNotif((prev) => ({ ...prev, [name]: checked }));
+    if (USE_DUMMY) return;
     try {
       await axios.put("/api/admin/notifications", { ...notif, [name]: checked });
     } catch {
@@ -230,7 +277,6 @@ const Settings = () => {
     }
   };
 
-  // Profile Picture Upload (stylish + preview)
   const handleProfilePicUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -240,9 +286,14 @@ const Settings = () => {
     }
   };
 
-  // Add Profile button click: set as main profile and update sidebar
   const handleAddProfilePic = async () => {
     if (tempPicUrl && profilePic) {
+      if (USE_DUMMY) {
+        setProfilePicUrl(tempPicUrl);
+        localStorage.setItem("adminProfilePic", tempPicUrl);
+        setTempPicUrl("");
+        return;
+      }
       try {
         const formData = new FormData();
         formData.append("profilePic", profilePic);
@@ -261,13 +312,17 @@ const Settings = () => {
     navigate("/");
   };
 
-  // Delete Account handlers
   const handleDeleteAccount = () => {
     setShowDeleteModal(true);
   };
 
   const confirmDelete = async () => {
     setShowDeleteModal(false);
+    if (USE_DUMMY) {
+      alert("Account deleted! (Dummy)");
+      navigate("/");
+      return;
+    }
     try {
       await axios.delete("/api/admin/account");
       alert("Account deleted!");
@@ -283,10 +338,10 @@ const Settings = () => {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-purple-200 via-blue-100 to-white">
-      <AdminSidebar profilePicUrl={profilePicUrl} />
+      <AdminSidebar profilePicUrl={profilePicUrl} adminNameProp={profile.name} />
       <main
         className={`
-          flex-1 p-4 md:p-10 ml-0 md:ml-64
+          flex-1 p-4 md:p-10 ml-0 md:ml-72
           transform transition-transform duration-500
           ${show ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}
         `}
@@ -304,15 +359,23 @@ const Settings = () => {
             <div className="flex flex-col md:flex-row items-center gap-6">
               <label className="flex flex-col items-center cursor-pointer">
                 <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-400 via-purple-400 to-blue-300 flex items-center justify-center mb-2 shadow-lg border-4 border-white">
-                  <img
-                    src={
-                      tempPicUrl ||
-                      profilePicUrl ||
-                      "https://randomuser.me/api/portraits/men/32.jpg"
-                    }
-                    alt="Profile"
-                    className="w-20 h-20 rounded-full object-cover"
-                  />
+                  {tempPicUrl ? (
+                    <img
+                      src={tempPicUrl}
+                      alt="Profile"
+                      className="w-20 h-20 rounded-full object-cover"
+                    />
+                  ) : profilePicUrl ? (
+                    <img
+                      src={profilePicUrl}
+                      alt="Profile"
+                      className="w-20 h-20 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="w-20 h-20 rounded-full flex items-center justify-center bg-white text-3xl font-bold text-purple-600 select-none">
+                      {getInitials(profile.name)}
+                    </span>
+                  )}
                 </div>
                 <span className="bg-gradient-to-r from-purple-500 to-blue-400 text-white px-4 py-2 rounded-lg font-semibold shadow hover:from-purple-600 hover:to-blue-500 transition text-sm">
                   Choose Profile Image

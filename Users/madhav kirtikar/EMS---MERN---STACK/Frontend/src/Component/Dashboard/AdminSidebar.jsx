@@ -2,40 +2,52 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import axios from 'axios'
 
-const USE_DUMMY = false; // Set to false when backend is ready
+const USE_DUMMY = true; // true: dummy data, false: backend data
+
+const DUMMY_ADMIN = {
+    name: "Admin User",
+    profilePic: "https://ui-avatars.com/api/?name=Admin+User&background=8b5cf6&color=fff"
+};
 
 const AdminSidebar = ({ profilePicUrl }) => {
     const location = useLocation();
 
-    // Profile image state
     const [profilePic, setProfilePic] = useState(
         profilePicUrl ||
         localStorage.getItem("adminProfilePic") ||
-        "https://randomuser.me/api/portraits/men/32.jpg"
+        DUMMY_ADMIN.profilePic
     );
-
-    // Admin name state
-    const [adminName, setAdminName] = useState(localStorage.getItem("adminName") || "Admin User");
+    const [adminName, setAdminName] = useState(localStorage.getItem("adminName") || DUMMY_ADMIN.name);
 
     // Update name if changed in localStorage (on profile update)
     useEffect(() => {
-        const onStorage = () => setAdminName(localStorage.getItem("adminName") || "Admin User");
+        const onStorage = () => setAdminName(localStorage.getItem("adminName") || DUMMY_ADMIN.name);
         window.addEventListener("storage", onStorage);
         return () => window.removeEventListener("storage", onStorage);
     }, []);
 
     // Also update on route change (for instant update in same tab)
     useEffect(() => {
-        setAdminName(localStorage.getItem("adminName") || "Admin User");
+        setAdminName(localStorage.getItem("adminName") || DUMMY_ADMIN.name);
     }, [location.pathname]);
 
-    // --- Backend: fetch admin info here ---
+    // Dummy + Backend: Always show dummy first, then try backend if enabled
     useEffect(() => {
+        setAdminName(DUMMY_ADMIN.name);
+        setProfilePic(DUMMY_ADMIN.profilePic);
+
         if (!USE_DUMMY) {
-            axios.get("/api/admin/profile").then(res => {
-                setAdminName(res.data.name || "Admin User");
-                setProfilePic(res.data.profilePicUrl || profilePic);
-            });
+            const token = localStorage.getItem("token");
+            const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+            axios.get("/api/admin/profile", config)
+                .then(res => {
+                    setAdminName(res.data.name || DUMMY_ADMIN.name);
+                    setProfilePic(res.data.profilePicUrl || DUMMY_ADMIN.profilePic);
+                })
+                .catch(() => {
+                    setAdminName(DUMMY_ADMIN.name);
+                    setProfilePic(DUMMY_ADMIN.profilePic);
+                });
         }
         // eslint-disable-next-line
     }, []);
@@ -63,7 +75,6 @@ const AdminSidebar = ({ profilePicUrl }) => {
                         <span className="absolute bottom-3 right-3 w-5 h-5 bg-green-400 border-2 border-white rounded-full"></span>
                     </div>
                 </div>
-                {/* Only show name if adminName exists */}
                 {admin.name && (
                     <div className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-800 to-blue-500 bg-clip-text text-transparent drop-shadow-lg tracking-wide mt-2">
                         {admin.name}

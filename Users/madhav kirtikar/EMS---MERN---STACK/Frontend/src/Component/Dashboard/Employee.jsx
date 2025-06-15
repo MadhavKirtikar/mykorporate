@@ -1,6 +1,9 @@
- import React, { useState, useEffect } from "react";
+ 
+import React, { useState, useEffect } from "react";
 import AdminSidebar from "./AdminSidebar";
 import axios from "axios";
+
+const USE_DUMMY = true; // true: dummy data, false: backend data
 
 const defaultProfile = "https://ui-avatars.com/api/?background=8b5cf6&color=fff&name=EMP";
 
@@ -17,6 +20,60 @@ const emptyForm = {
   gender: "",
   age: "",
 };
+
+const DUMMY_DEPARTMENTS = [
+  { id: 1, name: "HR" },
+  { id: 2, name: "IT" },
+  { id: 3, name: "Finance" },
+];
+
+const DUMMY_EMPLOYEES = [
+  {
+    id: 1,
+    name: "Amit",
+    department: "HR",
+    position: "Manager",
+    email: "amit@demo.com",
+    phone: "9876543210",
+    address: "Delhi",
+    salary: "50000",
+    password: "123456",
+    photo: "",
+    gender: "Male",
+    age: "32",
+    performance: 4.5,
+  },
+  {
+    id: 2,
+    name: "Priya",
+    department: "IT",
+    position: "Developer",
+    email: "priya@demo.com",
+    phone: "9876543211",
+    address: "Mumbai",
+    salary: "60000",
+    password: "123456",
+    photo: "",
+    gender: "Female",
+    age: "28",
+    performance: 4.2,
+  },
+  {
+    id: 3,
+    name: "Ravi",
+    department: "Finance",
+    position: "Accountant",
+    email: "ravi@demo.com",
+    phone: "9876543212",
+    address: "Pune",
+    salary: "45000",
+    password: "123456",
+    photo: "",
+    gender: "Male",
+    age: "35",
+    performance: 3.9,
+  },
+];
 
 const Employee = () => {
   const [departmentsList, setDepartmentsList] = useState([]);
@@ -39,8 +96,13 @@ const Employee = () => {
   const [successMsg, setSuccessMsg] = useState("");
   const [editPerformance, setEditPerformance] = useState("");
 
-  // Fetch departments and employees from backend
+  // Fetch departments and employees from backend or dummy
   const fetchAll = async () => {
+    if (USE_DUMMY) {
+      setDepartmentsList(DUMMY_DEPARTMENTS);
+      setEmployees(DUMMY_EMPLOYEES);
+      return;
+    }
     try {
       const [deptRes, empRes] = await Promise.all([
         axios.get("/api/departments"),
@@ -87,7 +149,7 @@ const Employee = () => {
     setAddError("");
   };
 
-  // ADD employee (backend)
+  // ADD employee (dummy/backend)
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!form.name || !form.department) {
@@ -104,6 +166,20 @@ const Employee = () => {
     }
     if (!form.age || isNaN(form.age) || form.age < 18 || form.age > 70) {
       setAddError("Valid age (18-70) is required.");
+      return;
+    }
+    if (USE_DUMMY) {
+      const newEmp = {
+        ...form,
+        id: Date.now(),
+        performance: 0,
+      };
+      setEmployees([...employees, newEmp]);
+      setSuccessMsg("Employee added successfully!");
+      setForm(emptyForm);
+      setShowAddForm(false);
+      setAddError("");
+      setShowPassword(false);
       return;
     }
     try {
@@ -128,7 +204,7 @@ const Employee = () => {
     setShowPassword(false);
   };
 
-  // UPDATE employee (backend)
+  // UPDATE employee (dummy/backend)
   const handleUpdate = async (e) => {
     e.preventDefault();
     if (!form.name || !form.department) {
@@ -149,6 +225,24 @@ const Employee = () => {
     }
     if (editPerformance && (editPerformance < 1 || editPerformance > 5)) {
       setAddError("Performance rating must be between 1 and 5.");
+      return;
+    }
+    if (USE_DUMMY) {
+      setEmployees(
+        employees.map((emp) =>
+          emp.id === selectedEmp.id
+            ? { ...form, id: emp.id, performance: editPerformance }
+            : emp
+        )
+      );
+      setSuccessMsg("Employee updated successfully!");
+      setForm(emptyForm);
+      setShowAddForm(false);
+      setEditMode(false);
+      setSelectedEmp(null);
+      setAddError("");
+      setShowPassword(false);
+      setEditPerformance("");
       return;
     }
     try {
@@ -172,8 +266,18 @@ const Employee = () => {
     setShowDeleteModal(true);
   };
 
-  // DELETE employee (backend)
+  // DELETE employee (dummy/backend)
   const confirmDelete = async () => {
+    if (USE_DUMMY) {
+      setEmployees(employees.filter((emp) => emp.id !== empToDelete.id));
+      setShowDeleteModal(false);
+      setEmpToDelete(null);
+      setSelectedEmp(null);
+      setEditMode(false);
+      setViewEmp(null);
+      setSuccessMsg("Employee deleted successfully!");
+      return;
+    }
     try {
       await axios.delete(`/api/employees/${empToDelete.id}`);
       setShowDeleteModal(false);
@@ -207,7 +311,6 @@ const Employee = () => {
     }));
     setSuccessMsg("Attendance marked!");
   };
-
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-purple-200 via-blue-100 to-white">

@@ -1,6 +1,51 @@
  import React, { useEffect, useState } from "react";
 import axios from "axios";
 
+const USE_DUMMY = true; // true: dummy data, false: backend data
+
+const DUMMY_ATTENDANCE = [
+  {
+    id: 1,
+    date: "2025-06-01",
+    status: "Present",
+    checkIn: "09:10",
+    checkOut: "18:00",
+    note: "On time",
+  },
+  {
+    id: 2,
+    date: "2025-06-02",
+    status: "Absent",
+    checkIn: "",
+    checkOut: "",
+    note: "Sick leave",
+  },
+  {
+    id: 3,
+    date: "2025-06-03",
+    status: "Present",
+    checkIn: "09:05",
+    checkOut: "18:10",
+    note: "",
+  },
+  {
+    id: 4,
+    date: "2025-06-04",
+    status: "Present",
+    checkIn: "09:00",
+    checkOut: "18:00",
+    note: "",
+  },
+  {
+    id: 5,
+    date: "2025-06-05",
+    status: "Absent",
+    checkIn: "",
+    checkOut: "",
+    note: "Personal work",
+  },
+];
+
 const Attendance = () => {
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,8 +57,12 @@ const Attendance = () => {
   useEffect(() => {
     setLoading(true);
     setError("");
-    // Backend fetch
     const fetchAttendance = async () => {
+      if (USE_DUMMY) {
+        setAttendance(DUMMY_ATTENDANCE);
+        setLoading(false);
+        return;
+      }
       try {
         const res = await axios.get("/api/attendance/me");
         setAttendance(Array.isArray(res.data) ? res.data : []);

@@ -1,6 +1,26 @@
  import React, { useState, useEffect } from "react";
 import axios from "axios";
 
+const USE_DUMMY = true; // true: dummy data, false: backend data
+
+const DUMMY_EVENTS = [
+  {
+    date: "2025-06-15",
+    title: "Team Meeting",
+    description: "Monthly team sync at 11:00 AM.",
+  },
+  {
+    date: "2025-06-16",
+    title: "Project Deadline",
+    description: "Submit all project deliverables.",
+  },
+  {
+    date: "2025-06-18",
+    title: "HR Workshop",
+    description: "Attend HR workshop in conference room.",
+  },
+];
+
 const CalenderEvents = ({ user }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -8,6 +28,11 @@ const CalenderEvents = ({ user }) => {
 
   useEffect(() => {
     setLoading(true);
+    if (USE_DUMMY) {
+      setEvents(DUMMY_EVENTS);
+      setLoading(false);
+      return;
+    }
     axios
       .get("/api/events")
       .then((res) => {

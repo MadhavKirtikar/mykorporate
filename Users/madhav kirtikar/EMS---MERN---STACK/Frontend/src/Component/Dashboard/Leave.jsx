@@ -2,6 +2,44 @@
 import AdminSidebar from "./AdminSidebar";
 import axios from "axios";
 
+const USE_DUMMY = true; // true: dummy data, false: backend data
+
+const DUMMY_LEAVES = [
+  {
+    _id: "1",
+    name: "Amit",
+    department: "HR",
+    from: "2025-06-10",
+    to: "2025-06-12",
+    reason: "Personal work",
+    status: "Pending",
+  },
+  {
+    _id: "2",
+    name: "Priya",
+    department: "IT",
+    from: "2025-06-05",
+    to: "2025-06-07",
+    reason: "Medical",
+    status: "Approved",
+  },
+  {
+    _id: "3",
+    name: "Ravi",
+    department: "Finance",
+    from: "2025-05-20",
+    to: "2025-05-22",
+    reason: "Family function",
+    status: "Rejected",
+  },
+];
+
+const DUMMY_DEPARTMENTS = [
+  { name: "HR" },
+  { name: "IT" },
+  { name: "Finance" },
+];
+
 const Leave = () => {
   const [leaves, setLeaves] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -18,8 +56,13 @@ const Leave = () => {
   const [addError, setAddError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  // Fetch all leaves and departments from backend
+  // Fetch all leaves and departments from backend or dummy
   const fetchAll = async () => {
+    if (USE_DUMMY) {
+      setLeaves(DUMMY_LEAVES);
+      setDepartments(DUMMY_DEPARTMENTS);
+      return;
+    }
     try {
       const [leaveRes, deptRes] = await Promise.all([
         axios.get("/api/leaves"),
@@ -28,8 +71,8 @@ const Leave = () => {
       setLeaves(Array.isArray(leaveRes.data) ? leaveRes.data : []);
       setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
     } catch {
-      setLeaves([]);
-      setDepartments([]);
+      setLeaves(DUMMY_LEAVES);
+      setDepartments(DUMMY_DEPARTMENTS);
     }
   };
 
@@ -57,6 +100,23 @@ const Leave = () => {
       setAddError("All fields are required.");
       return;
     }
+    if (USE_DUMMY) {
+      const newLeave = {
+        ...form,
+        _id: Date.now().toString(),
+      };
+      setLeaves([...leaves, newLeave]);
+      setSuccessMsg("Leave applied successfully!");
+      setForm({
+        name: "",
+        department: "",
+        from: "",
+        to: "",
+        reason: "",
+        status: "Pending",
+      });
+      return;
+    }
     try {
       await axios.post("/api/leaves", form);
       setSuccessMsg("Leave applied successfully!");
@@ -75,6 +135,15 @@ const Leave = () => {
   };
 
   const handleStatus = async (id, status) => {
+    if (USE_DUMMY) {
+      setLeaves(
+        leaves.map((leave) =>
+          leave._id === id ? { ...leave, status } : leave
+        )
+      );
+      setSuccessMsg(`Leave ${status}!`);
+      return;
+    }
     try {
       await axios.patch(`/api/leaves/${id}`, { status });
       setSuccessMsg(`Leave ${status}!`);
@@ -89,6 +158,12 @@ const Leave = () => {
   };
 
   const confirmDelete = async () => {
+    if (USE_DUMMY) {
+      setLeaves(leaves.filter((leave) => leave._id !== deleteLeave));
+      setDeleteLeave(null);
+      setSuccessMsg("Leave deleted!");
+      return;
+    }
     try {
       await axios.delete(`/api/leaves/${deleteLeave}`);
       setDeleteLeave(null);

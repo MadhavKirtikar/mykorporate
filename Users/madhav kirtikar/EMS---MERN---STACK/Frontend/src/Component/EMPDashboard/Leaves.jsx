@@ -1,6 +1,32 @@
  import React, { useState, useEffect } from "react";
 import axios from "axios";
 
+const USE_DUMMY = true; // true: dummy data, false: backend data
+
+const DUMMY_LEAVES = [
+  {
+    date: "2025-06-10",
+    endDate: "2025-06-12",
+    type: "Sick Leave",
+    reason: "Fever",
+    status: "Approved",
+  },
+  {
+    date: "2025-06-15",
+    endDate: "2025-06-15",
+    type: "Casual Leave",
+    reason: "Personal work",
+    status: "Pending",
+  },
+  {
+    date: "2025-06-18",
+    endDate: "2025-06-18",
+    type: "Other",
+    reason: "Family function",
+    status: "Rejected",
+  },
+];
+
 const FILTERS = [
   { label: "All", color: "bg-purple-100 text-purple-700" },
   { label: "Approved", color: "bg-green-100 text-green-700" },
@@ -17,8 +43,11 @@ const Leaves = ({ user }) => {
 
   useEffect(() => {
     if (!user) return;
-    // Fetch leaves from backend
     const fetchLeaves = async () => {
+      if (USE_DUMMY) {
+        setLeaves(DUMMY_LEAVES);
+        return;
+      }
       try {
         const token = localStorage.getItem("token");
         const res = await axios.get("/api/leaves", {
@@ -54,6 +83,17 @@ const Leaves = ({ user }) => {
     setMessage("");
     if (form.date && form.type) {
       if (!form.endDate) form.endDate = form.date;
+      if (USE_DUMMY) {
+        setLeaves([
+          ...leaves,
+          { ...form, status: "Pending" }
+        ]);
+        setForm({ date: "", endDate: "", type: "", reason: "" });
+        setShowForm(false);
+        setMessage("Leave request sent to admin! (Dummy)");
+        setTimeout(() => setMessage(""), 2500);
+        return;
+      }
       try {
         const token = localStorage.getItem("token");
         await axios.post(
@@ -88,13 +128,11 @@ const Leaves = ({ user }) => {
 
   return (
     <div className="max-w-3xl mx-auto mt-4 pb-8">
-      {/* Title same style as Settings/Calendar/Notifications */}
       <h2 className="text-4xl font-extrabold text-center tracking-wide mb-10">
         <span className="bg-gradient-to-r from-purple-500 via-blue-400 to-pink-400 bg-clip-text text-transparent drop-shadow">
           Leaves
         </span>
       </h2>
-      {/* FILTERS */}
       <div className="flex justify-center gap-3 flex-wrap mb-6">
         {FILTERS.map(f => (
           <button
@@ -110,7 +148,6 @@ const Leaves = ({ user }) => {
           </button>
         ))}
       </div>
-      {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div className="flex flex-wrap gap-3 justify-center md:justify-end">
           <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full shadow-sm text-sm font-semibold">
@@ -133,13 +170,11 @@ const Leaves = ({ user }) => {
           {showForm ? "Close" : "Apply Leave"}
         </button>
       </div>
-      {/* MESSAGE */}
       {message && (
         <div className="mb-4 text-center font-semibold text-green-700 bg-green-50 border border-green-200 rounded-xl py-2 shadow animate-pulse">
           {message}
         </div>
       )}
-      {/* FORM */}
       {showForm && (
         <form onSubmit={handleApply} className="mb-8 grid grid-cols-1 md:grid-cols-5 gap-4 items-end bg-gradient-to-r from-purple-50 via-blue-50 to-white rounded-2xl p-6 border border-purple-100 shadow">
           <div className="md:col-span-2">
@@ -202,7 +237,6 @@ const Leaves = ({ user }) => {
           </button>
         </form>
       )}
-      {/* TABLE */}
       <div className="overflow-x-auto rounded-2xl shadow border border-purple-100 bg-gradient-to-br from-white via-purple-50 to-blue-50">
         <table className="min-w-full rounded-xl">
           <thead>

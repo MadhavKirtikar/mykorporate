@@ -1,15 +1,38 @@
  import React, { useState, useEffect } from "react";
 import axios from "axios";
 
+const USE_DUMMY = true; // true: dummy data, false: backend data
+
+const DUMMY_PROFILE = {
+  name: "Employee Name",
+  email: "emp@demo.com",
+  phone: "9876543210",
+  gender: "Male",
+  age: 28,
+  department: "Development",
+  position: "Software Engineer",
+  address: "Mumbai, India",
+  joiningDate: "2022-01-10",
+  salary: 50000,
+  photo: "",
+};
+
 const MyProfile = ({ profile, setProfile }) => {
   const [edit, setEdit] = useState(false);
   const [form, setForm] = useState(profile);
   const [photoPreview, setPhotoPreview] = useState(profile.photo);
   const [loading, setLoading] = useState(true);
 
-  // Fetch profile from backend on mount
+  // Fetch profile from backend or dummy on mount
   useEffect(() => {
     const fetchProfile = async () => {
+      if (USE_DUMMY) {
+        setProfile(DUMMY_PROFILE);
+        setForm(DUMMY_PROFILE);
+        setPhotoPreview(DUMMY_PROFILE.photo);
+        setLoading(false);
+        return;
+      }
       try {
         const token = localStorage.getItem("token");
         const res = await axios.get("/api/employee/me", {
@@ -55,9 +78,14 @@ const MyProfile = ({ profile, setProfile }) => {
     }
   };
 
-  // Save profile to backend
+  // Save profile to backend or dummy
   const handleSave = async (e) => {
     e.preventDefault();
+    if (USE_DUMMY) {
+      setProfile(form);
+      setEdit(false);
+      return;
+    }
     try {
       const token = localStorage.getItem("token");
       const res = await axios.put(

@@ -2,7 +2,7 @@
 import AdminSidebar from "./AdminSidebar";
 import axios from "axios";
 
-const USE_DUMMY = false; // Backend aane par false kar dena
+const USE_DUMMY = true; // true: dummy data, false: backend data
 
 const DUMMY_DEPARTMENTS = [
   { id: 1, name: "HR", description: "Human Resources" },
@@ -31,7 +31,7 @@ const Department = () => {
   const [show, setShow] = useState(false);
   const [employees, setEmployees] = useState([]);
 
-  // Fetch departments and employees from backend
+  // Fetch departments and employees from backend or dummy
   const fetchAll = async () => {
     if (USE_DUMMY) {
       setDepartments(DUMMY_DEPARTMENTS);
@@ -77,7 +77,7 @@ const Department = () => {
     setMessage("");
   };
 
-  // ADD department (backend)
+  // ADD department (dummy/backend)
   const handleAdd = async (e) => {
     e.preventDefault();
     setError("");
@@ -106,7 +106,6 @@ const Department = () => {
       setMessage("Department added successfully!");
       return;
     }
-    // Backend POST
     try {
       await axios.post("/api/departments", form);
       setForm({ name: "", description: "" });
@@ -117,7 +116,7 @@ const Department = () => {
     }
   };
 
-  // EDIT department (backend)
+  // EDIT department (dummy/backend)
   const handleEditSave = async (e) => {
     e.preventDefault();
     setError("");
@@ -149,7 +148,6 @@ const Department = () => {
       setMessage("Department updated successfully!");
       return;
     }
-    // Backend PUT/PATCH
     try {
       await axios.put(`/api/departments/${editDept.id}`, form);
       setEditDept(null);
@@ -175,7 +173,7 @@ const Department = () => {
     setMessage("");
   };
 
-  // DELETE department (backend)
+  // DELETE department (dummy/backend)
   const handleDeleteConfirm = async () => {
     if (USE_DUMMY) {
       setDepartments(departments.filter((d) => d.id !== deleteDept.id));
@@ -188,7 +186,6 @@ const Department = () => {
       }
       return;
     }
-    // Backend DELETE
     try {
       await axios.delete(`/api/departments/${deleteDept.id}`);
       setDeleteDept(null);

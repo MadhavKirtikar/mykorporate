@@ -6,7 +6,7 @@ import Title from "./Component/Title/title.jsx"
 import Login from "./Component/Login/login.jsx"
 import ForgotPassword from "./Component/Login/ForgotPassword.jsx"
 import About from "./Component/About/about.jsx"
-import Admin from "./pages/AdminDashboard/AdminDashboard.jsx"
+import AdminDashboard from "./pages/AdminDashboard/AdminDashboard.jsx"
 import AdminSettings from "./Component/Dashboard/Settings.jsx"
 import Salary from "./Component/Dashboard/Salary.jsx"
 import Leave from "./Component/Dashboard/Leave.jsx"
@@ -59,7 +59,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/admin/salary" element={<Salary />} />
           <Route path="/admin/leave" element={<Leave />} />

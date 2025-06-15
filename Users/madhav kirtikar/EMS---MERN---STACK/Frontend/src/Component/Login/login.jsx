@@ -1,37 +1,68 @@
  import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-// import axios from 'axios'; // Backend ke liye, abhi comment kar diya
+import axios from 'axios'; // Backend ke liye, abhi comment kar diya
 import logicBg from "../../Assets/logic.jpg";
+
+// Dummy/backend toggle
+const USE_DUMMY = true; // true: dummy data, false: backend data
 
 // =====================
 // Dummy API Functions (backend ki jagah)
 const employeeLogin = async ({ email, password }) => {
-  // Dummy login: email "emp@demo.com" & password "123456"
-  if (email === "emp@demo.com" && password === "123456") {
-    return { data: { token: "dummy-emp-token" } };
+  if (USE_DUMMY) {
+    // Dummy login: email "emp@demo.com" & password "123456"
+    if (email === "emp@demo.com" && password === "123456") {
+      return { data: { token: "dummy-emp-token" } };
+    }
+    throw new Error("Invalid employee credentials");
+  } else {
+    // Backend API call
+     const res = await axios.post("/api/employee/login", { email, password });
+     return res;
+    throw new Error("Backend not implemented");
   }
-  throw new Error("Invalid employee credentials");
 };
 
 const adminLogin = async ({ username, password }) => {
-  // Dummy login: username "admin" & password "admin123"
-  if (username === "admin" && password === "admin123") {
-    return { data: { token: "dummy-admin-token" } };
+  if (USE_DUMMY) {
+    // Dummy login: username "admin" & password "admin123"
+    if (username === "admin" && password === "admin123") {
+      return { data: { token: "dummy-admin-token" } };
+    }
+    throw new Error("Invalid admin credentials");
+  } else {
+    // Backend API call
+     const res = await axios.post("/api/admin/login", { username, password });
+     return res;
+    throw new Error("Backend not implemented");
   }
-  throw new Error("Invalid admin credentials");
 };
 
 const adminRegister = async ({ username, email, password }) => {
-  // Dummy register: always success
-  return { data: { token: "dummy-admin-token" } };
+  if (USE_DUMMY) {
+    // Dummy register: always success
+    return { data: { token: "dummy-admin-token" } };
+  } else {
+    // Backend API call
+     const res = await axios.post("/api/admin/register", { username, email, password });
+     return res;
+    throw new Error("Backend not implemented");
+  }
 };
 // =====================
 
 // Utility: Check if admin exists (dummy)
 const checkAdminExists = async () => {
-  // Dummy: admin always exists after first register
-  const exists = localStorage.getItem("dummyAdminExists");
-  return !!exists;
+  if (USE_DUMMY) {
+    // Dummy: admin always exists after first register
+    const exists = localStorage.getItem("dummyAdminExists");
+    return !!exists;
+  } else {
+    // Backend API call
+     const res = await axios.get("/api/admin/exists");
+     return res.data.exists;
+    return false;
+  }
 };
 
 const LoginRegister = () => {
@@ -157,7 +188,9 @@ const LoginRegister = () => {
       setAdminUsername(registerUsername);
       setAdminPassword(registerPassword);
       setAdminExists(true);
-      localStorage.setItem("dummyAdminExists", "true"); // Dummy admin exists flag
+      if (USE_DUMMY) {
+        localStorage.setItem("dummyAdminExists", "true"); // Dummy admin exists flag
+      }
       navigate('/admin/dashboard');
     } catch (err) {
       setRegisterError('Registration failed. Username or email may already exist.');

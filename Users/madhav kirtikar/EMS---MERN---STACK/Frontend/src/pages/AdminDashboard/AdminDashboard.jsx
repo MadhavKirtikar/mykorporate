@@ -3,6 +3,30 @@ import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../../Component/Dashboard/AdminSidebar";
 import axios from "axios";
 
+// Dummy/backend toggle
+const USE_DUMMY = true; // true: dummy data, false: backend data
+
+// Dummy data
+const DUMMY_EMPLOYEES = [
+  { name: "Amit Sharma", department: "Development" },
+  { name: "Priya Singh", department: "HR" },
+  { name: "Rahul Verma", department: "Finance" },
+];
+const DUMMY_DEPARTMENTS = [
+  { name: "Development" },
+  { name: "HR" },
+  { name: "Finance" },
+];
+const DUMMY_LEAVES = [
+  { name: "Amit Sharma", status: "Pending" },
+  { name: "Priya Singh", status: "Approved" },
+];
+const DUMMY_SALARIES = [
+  { amount: 50000, status: "Paid" },
+  { amount: 60000, status: "Paid" },
+  { amount: 45000, status: "Unpaid" },
+];
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [employees, setEmployees] = React.useState([]);
@@ -14,10 +38,15 @@ const AdminDashboard = () => {
   React.useEffect(() => {
     setTimeout(() => setShow(true), 50);
 
-    // --- Backend API calls ---
     const fetchAll = async () => {
+      if (USE_DUMMY) {
+        setEmployees(DUMMY_EMPLOYEES);
+        setDepartments(DUMMY_DEPARTMENTS);
+        setLeaves(DUMMY_LEAVES);
+        setSalaries(DUMMY_SALARIES);
+        return;
+      }
       try {
-        // NOTE: Replace URLs with your actual backend endpoints if different
         const token = localStorage.getItem("token");
         const config = token
           ? { headers: { Authorization: `Bearer ${token}` } }

@@ -5,10 +5,26 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import axios from "axios";
 
+const USE_DUMMY = true; // true: dummy data, false: backend data
+
 const COLORS = ["#a78bfa", "#818cf8", "#38bdf8", "#f472b6", "#facc15", "#34d399", "#f87171", "#fbbf24", "#60a5fa", "#f472b6"];
 const monthOrder = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
+];
+
+const DUMMY_EMPLOYEES = [
+  { _id: "1", name: "Amit", department: "HR", salary: 50000, performance: 4.5, leaves: 2, salaryMonth: "June" },
+  { _id: "2", name: "Priya", department: "IT", salary: 60000, performance: 4.2, leaves: 1, salaryMonth: "June" },
+  { _id: "3", name: "Ravi", department: "Finance", salary: 45000, performance: 3.9, leaves: 3, salaryMonth: "May" },
+  { _id: "4", name: "Sonal", department: "HR", salary: 52000, performance: 4.8, leaves: 0, salaryMonth: "May" },
+  { _id: "5", name: "Deepak", department: "IT", salary: 61000, performance: 4.1, leaves: 2, salaryMonth: "April" },
+];
+
+const DUMMY_DEPARTMENTS = [
+  { name: "HR" },
+  { name: "IT" },
+  { name: "Finance" },
 ];
 
 const Reports = () => {
@@ -19,8 +35,13 @@ const Reports = () => {
   const [filteredEmployees, setFilteredEmployees] = useState([]);
 
   useEffect(() => {
-    // Backend API calls
+    // Backend or Dummy API calls
     const fetchData = async () => {
+      if (USE_DUMMY) {
+        setEmployees(DUMMY_EMPLOYEES);
+        setDepartments(DUMMY_DEPARTMENTS);
+        return;
+      }
       try {
         const [empRes, deptRes] = await Promise.all([
           axios.get("/api/employees"),
@@ -29,8 +50,8 @@ const Reports = () => {
         setEmployees(Array.isArray(empRes.data) ? empRes.data : []);
         setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
       } catch {
-        setEmployees([]);
-        setDepartments([]);
+        setEmployees(DUMMY_EMPLOYEES);
+        setDepartments(DUMMY_DEPARTMENTS);
       }
     };
     fetchData();

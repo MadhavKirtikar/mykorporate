@@ -1,15 +1,40 @@
  import React, { useState, useEffect } from "react";
 import axios from "axios";
 
+const USE_DUMMY = true; // true: dummy data, false: backend data
+
+const DUMMY_NOTIFICATIONS = [
+  {
+    message: "Your leave request has been approved.",
+    date: "2025-06-15 10:30 AM",
+    read: false,
+  },
+  {
+    message: "Salary credited for June.",
+    date: "2025-06-10 09:00 AM",
+    read: true,
+  },
+  {
+    message: "New event: Team Meeting at 4 PM.",
+    date: "2025-06-09 08:00 AM",
+    read: false,
+  },
+];
+
 const Notifications = ({ user }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch notifications from backend
+  // Fetch notifications from backend or dummy
   useEffect(() => {
     setLoading(true);
     if (!user) return;
     const fetchNotifications = async () => {
+      if (USE_DUMMY) {
+        setNotifications(DUMMY_NOTIFICATIONS);
+        setLoading(false);
+        return;
+      }
       try {
         const token = localStorage.getItem("token");
         const res = await axios.get("/api/notifications", {
@@ -34,6 +59,10 @@ const Notifications = ({ user }) => {
   }
 
   const markAllRead = async () => {
+    if (USE_DUMMY) {
+      setNotifications(notifications.map(n => ({ ...n, read: true })));
+      return;
+    }
     try {
       const token = localStorage.getItem("token");
       await axios.put(

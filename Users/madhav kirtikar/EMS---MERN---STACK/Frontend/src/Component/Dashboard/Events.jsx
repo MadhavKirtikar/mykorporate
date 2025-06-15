@@ -2,6 +2,32 @@
 import AdminSidebar from "./AdminSidebar";
 import axios from "axios";
 
+const USE_DUMMY = true; // true: dummy data, false: backend data
+
+const DUMMY_EVENTS = [
+  {
+    id: 1,
+    type: "Holiday",
+    title: "Independence Day",
+    date: "2025-08-15",
+    details: "Office closed for Independence Day.",
+  },
+  {
+    id: 2,
+    type: "Event",
+    title: "Annual Meetup",
+    date: "2025-09-10",
+    details: "All employees annual meetup at HQ.",
+  },
+  {
+    id: 3,
+    type: "Announcement",
+    title: "New HR Policy",
+    date: "2025-07-01",
+    details: "Updated HR policy will be effective from July.",
+  },
+];
+
 const typeColors = {
   Holiday: "bg-green-100 text-green-700 border-green-300",
   Event: "bg-blue-100 text-blue-700 border-blue-300",
@@ -17,13 +43,17 @@ const AdminEvents = () => {
   const [form, setForm] = useState({ type: "Holiday", title: "", date: "", details: "" });
   const [deleteId, setDeleteId] = useState(null);
 
-  // Fetch events from backend
+  // Fetch events from backend or dummy
   const fetchEvents = async () => {
+    if (USE_DUMMY) {
+      setEvents(DUMMY_EVENTS);
+      return;
+    }
     try {
       const res = await axios.get("/api/events");
       setEvents(Array.isArray(res.data) ? res.data : []);
     } catch {
-      setEvents([]);
+      setEvents(DUMMY_EVENTS);
     }
   };
 
@@ -39,6 +69,15 @@ const AdminEvents = () => {
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!form.title || !form.date) return;
+    if (USE_DUMMY) {
+      const newEvent = {
+        ...form,
+        id: Date.now(),
+      };
+      setEvents([...events, newEvent]);
+      setForm({ type: "Holiday", title: "", date: "", details: "" });
+      return;
+    }
     try {
       await axios.post("/api/events", form);
       await fetchEvents();
@@ -53,12 +92,17 @@ const AdminEvents = () => {
   };
 
   const handleDelete = async () => {
+    if (USE_DUMMY) {
+      setEvents(events.filter(ev => ev.id !== deleteId));
+      setDeleteId(null);
+      return;
+    }
     try {
       await axios.delete(`/api/events/${deleteId}`);
       await fetchEvents();
       setDeleteId(null);
     } catch {
-      // Optionally show error
+      setDeleteId(null);
     }
   };
 

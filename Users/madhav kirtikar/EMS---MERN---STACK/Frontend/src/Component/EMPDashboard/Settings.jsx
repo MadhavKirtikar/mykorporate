@@ -1,6 +1,19 @@
  import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 
+const USE_DUMMY = false; // true: dummy data, false: backend data
+
+const DUMMY_USER = {
+  name: "Employee Name",
+  email: "emp@demo.com",
+  phone: "9876543210",
+  department: "Development",
+  notifications: true,
+  password: "",
+  confirmPassword: "",
+  profile: "",
+};
+
 const Settings = () => {
   const [user, setUser] = useState({
     name: "",
@@ -21,6 +34,12 @@ const Settings = () => {
   // Load user from backend/localStorage on mount
   useEffect(() => {
     const fetchUser = async () => {
+      if (USE_DUMMY) {
+        setUser({ ...DUMMY_USER, password: "", confirmPassword: "" });
+        setProfilePreview(DUMMY_USER.profile || "");
+        if (DUMMY_USER.profile) localStorage.setItem("profile", DUMMY_USER.profile);
+        return;
+      }
       try {
         const token = localStorage.getItem("token");
         const res = await axios.get("/api/employee/settings", {
@@ -73,6 +92,11 @@ const Settings = () => {
     }
     if (user.profile) {
       localStorage.setItem("profile", user.profile); // Sidebar sync
+    }
+    if (USE_DUMMY) {
+      setMessage("Settings saved! (Dummy)");
+      setLoading(false);
+      return;
     }
     try {
       const token = localStorage.getItem("token");

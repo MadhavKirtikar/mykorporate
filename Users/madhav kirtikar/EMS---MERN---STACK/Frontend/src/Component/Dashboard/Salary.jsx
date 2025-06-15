@@ -4,6 +4,47 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import axios from "axios";
 
+const USE_DUMMY = true; // true: dummy data, false: backend data
+
+const DUMMY_EMPLOYEES = [
+  { id: 1, name: "Amit", department: "HR", salary: 50000 },
+  { id: 2, name: "Priya", department: "IT", salary: 60000 },
+  { id: 3, name: "Ravi", department: "Finance", salary: 45000 },
+];
+
+const DUMMY_DEPARTMENTS = [
+  { id: 1, name: "HR" },
+  { id: 2, name: "IT" },
+  { id: 3, name: "Finance" },
+];
+
+const DUMMY_SALARIES = [
+  {
+    id: 1,
+    name: "Amit",
+    department: "HR",
+    month: "June",
+    amount: 50000,
+    status: "Paid",
+  },
+  {
+    id: 2,
+    name: "Priya",
+    department: "IT",
+    month: "June",
+    amount: 60000,
+    status: "Pending",
+  },
+  {
+    id: 3,
+    name: "Ravi",
+    department: "Finance",
+    month: "May",
+    amount: 45000,
+    status: "Paid",
+  },
+];
+
 const monthColors = {
   January: "bg-blue-100 text-blue-700",
   February: "bg-pink-100 text-pink-700",
@@ -46,8 +87,14 @@ const Salary = () => {
   }, [error]);
 
   useEffect(() => {
-    // Fetch salaries, employees, departments from backend
+    // Fetch salaries, employees, departments from backend or dummy
     const fetchData = async () => {
+      if (USE_DUMMY) {
+        setSalaries(DUMMY_SALARIES);
+        setEmployees(DUMMY_EMPLOYEES);
+        setDepartments(DUMMY_DEPARTMENTS);
+        return;
+      }
       try {
         const [salRes, empRes, deptRes] = await Promise.all([
           axios.get("/api/salaries"),
@@ -58,9 +105,9 @@ const Salary = () => {
         setEmployees(Array.isArray(empRes.data) ? empRes.data : []);
         setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
       } catch (error) {
-        setSalaries([]);
-        setEmployees([]);
-        setDepartments([]);
+        setSalaries(DUMMY_SALARIES);
+        setEmployees(DUMMY_EMPLOYEES);
+        setDepartments(DUMMY_DEPARTMENTS);
       }
     };
     fetchData();
@@ -93,6 +140,20 @@ const Salary = () => {
     setMessage("");
     if (!form.name || !form.department || !form.month || !form.amount) {
       setError("All fields are required.");
+      return;
+    }
+    if (USE_DUMMY) {
+      const newSalary = {
+        id: Date.now(),
+        name: form.name,
+        department: form.department,
+        month: form.month,
+        amount: form.amount,
+        status: "Pending",
+      };
+      setSalaries([...salaries, newSalary]);
+      setMessage("Salary added successfully.");
+      setForm({ name: "", department: "", month: "", amount: "" });
       return;
     }
     try {
@@ -153,6 +214,17 @@ const Salary = () => {
   };
 
   const handleMarkAsPaid = async (salary) => {
+    if (USE_DUMMY) {
+      setSalaries(
+        salaries.map((s) =>
+          (s.id || s._id) === (salary.id || salary._id)
+            ? { ...s, status: "Paid" }
+            : s
+        )
+      );
+      setMessage("Marked as paid.");
+      return;
+    }
     try {
       await axios.patch(`/api/salaries/${salary._id || salary.id}`, { status: "Paid" });
       setMessage("Marked as paid.");
@@ -169,6 +241,12 @@ const Salary = () => {
   };
 
   const confirmDelete = async () => {
+    if (USE_DUMMY) {
+      setSalaries(salaries.filter((s) => (s.id || s._id) !== deleteSalary));
+      setMessage("Salary record deleted.");
+      setDeleteSalary(null);
+      return;
+    }
     try {
       await axios.delete(`/api/salaries/${deleteSalary}`);
       setMessage("Salary record deleted.");
