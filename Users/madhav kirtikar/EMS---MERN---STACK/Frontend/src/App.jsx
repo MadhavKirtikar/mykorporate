@@ -1,4 +1,4 @@
- import React, { useState } from "react"
+import React, { useState } from "react"
 import Navbar from "./Component/Navbar/Navbar.jsx"
 import Hero from "./Component/Hero/Hero.jsx"
 import Features from "./Component/Features/features.jsx"
