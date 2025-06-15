@@ -1,42 +1,29 @@
  import React, { useState, useEffect } from "react";
-
-// Dummy notifications for frontend testing
-const USE_DUMMY = true; // Jab backend aayega, sirf isko false kar dena
-
-const DUMMY_NOTIFICATIONS = [
-  { message: "Your leave for 15 June is approved.", date: "2025-06-10", read: false },
-  { message: "Payslip for May 2025 is now available.", date: "2025-06-05", read: false },
-  { message: "Team meeting scheduled on 20 June.", date: "2025-06-01", read: true },
-];
+import axios from "axios";
 
 const Notifications = ({ user }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch notifications (dummy or backend)
+  // Fetch notifications from backend
   useEffect(() => {
     setLoading(true);
-    if (USE_DUMMY) {
-      setTimeout(() => {
-        setNotifications(DUMMY_NOTIFICATIONS);
+    if (!user) return;
+    const fetchNotifications = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get("/api/notifications", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setNotifications(Array.isArray(res.data) ? res.data : []);
         setLoading(false);
-      }, 400);
-      return;
-    }
-    // Uncomment below for backend
-    /*
-    fetch("/api/notifications")
-      .then((res) => res.json())
-      .then((data) => {
-        setNotifications(data);
-        setLoading(false);
-      })
-      .catch(() => {
+      } catch {
         setNotifications([]);
         setLoading(false);
-      });
-    */
-  }, []);
+      }
+    };
+    fetchNotifications();
+  }, [user]);
 
   if (!user) {
     return (
@@ -47,19 +34,17 @@ const Notifications = ({ user }) => {
   }
 
   const markAllRead = async () => {
-    if (USE_DUMMY) {
-      setNotifications(notifications.map(n => ({ ...n, read: true })));
-      return;
-    }
-    // Uncomment below for backend
-    /*
     try {
-      await fetch("/api/notifications/mark-all-read", { method: "PUT" });
+      const token = localStorage.getItem("token");
+      await axios.put(
+        "/api/notifications/mark-all-read",
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setNotifications(notifications.map(n => ({ ...n, read: true })));
     } catch {
       setNotifications(notifications.map(n => ({ ...n, read: true })));
     }
-    */
   };
 
   return (

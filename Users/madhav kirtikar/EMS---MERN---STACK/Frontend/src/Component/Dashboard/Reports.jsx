@@ -3,22 +3,7 @@ import AdminSidebar from "./AdminSidebar";
 import { PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Legend, LineChart, Line, AreaChart, Area } from "recharts";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-//import axios from "axios";
-
-const USE_DUMMY = true; // Backend aane par false kar dena
-
-const DUMMY_EMPLOYEES = [
-  { _id: "1", name: "Amit", department: "HR", salary: 40000, performance: 4.5, leaves: 2, joiningDate: "2024-01-10", salaryMonth: "January" },
-  { _id: "2", name: "Priya", department: "IT", salary: 50000, performance: 4.8, leaves: 1, joiningDate: "2024-02-15", salaryMonth: "February" },
-  { _id: "3", name: "Rahul", department: "Finance", salary: 45000, performance: 4.2, leaves: 3, joiningDate: "2024-03-01", salaryMonth: "March" },
-  { _id: "4", name: "Simran", department: "HR", salary: 42000, performance: 4.7, leaves: 0, joiningDate: "2024-01-20", salaryMonth: "January" },
-  { _id: "5", name: "Vikas", department: "IT", salary: 52000, performance: 4.9, leaves: 2, joiningDate: "2024-02-25", salaryMonth: "February" },
-];
-const DUMMY_DEPARTMENTS = [
-  { name: "HR" },
-  { name: "IT" },
-  { name: "Finance" }
-];
+import axios from "axios";
 
 const COLORS = ["#a78bfa", "#818cf8", "#38bdf8", "#f472b6", "#facc15", "#34d399", "#f87171", "#fbbf24", "#60a5fa", "#f472b6"];
 const monthOrder = [
@@ -34,13 +19,8 @@ const Reports = () => {
   const [filteredEmployees, setFilteredEmployees] = useState([]);
 
   useEffect(() => {
-    if (USE_DUMMY) {
-      setEmployees(DUMMY_EMPLOYEES);
-      setDepartments(DUMMY_DEPARTMENTS);
-      return;
-    }
     // Backend API calls
-    const fetchAll = async () => {
+    const fetchData = async () => {
       try {
         const [empRes, deptRes] = await Promise.all([
           axios.get("/api/employees"),
@@ -53,7 +33,7 @@ const Reports = () => {
         setDepartments([]);
       }
     };
-    fetchAll();
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -205,6 +185,7 @@ const Reports = () => {
     doc.save(`${section}-report.pdf`);
   };
 
+  // Top performers logic
   const topPerformers = [...employees]
     .filter(emp => emp.performance)
     .sort((a, b) => (b.performance || 0) - (a.performance || 0))
@@ -222,16 +203,15 @@ const Reports = () => {
 
   const salaryByMonth = {};
   const leavesByMonth = {};
-   employees.forEach(emp => {
-  const month = emp.salaryMonth || emp.month;
-  if (month && (emp.salary || emp.amount)) {
-    salaryByMonth[month] = (salaryByMonth[month] || 0) + (emp.salary || emp.amount || 0);
-  }
-  // Sirf Approved/Rejected leaves count karo
-  if (month && emp.leaves && emp.status !== "Pending") {
-    leavesByMonth[month] = (leavesByMonth[month] || 0) + emp.leaves;
-  }
-});
+  employees.forEach(emp => {
+    const month = emp.salaryMonth || emp.month;
+    if (month && (emp.salary || emp.amount)) {
+      salaryByMonth[month] = (salaryByMonth[month] || 0) + (emp.salary || emp.amount || 0);
+    }
+    if (month && emp.leaves && emp.status !== "Pending") {
+      leavesByMonth[month] = (leavesByMonth[month] || 0) + emp.leaves;
+    }
+  });
   const barData = monthOrder.map(month => ({
     month,
     total: salaryByMonth[month] || 0,
@@ -261,6 +241,45 @@ const Reports = () => {
               Reports & Analytics
             </span>
           </h1>
+
+          {/* Top Performers Section */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-green-700 mb-4 text-center">🏆 Top Employees</h2>
+            <div className="flex flex-wrap gap-6 justify-center">
+              {topPerformers.length === 0 ? (
+                <div className="text-gray-400 text-center">No performance data available.</div>
+              ) : (
+                topPerformers.map((emp, idx) => (
+                  <div
+                    key={emp._id}
+                    className={`flex flex-col items-center bg-white rounded-2xl shadow-lg p-6 border-2 ${
+                      idx === 0
+                        ? "border-yellow-400"
+                        : idx === 1
+                        ? "border-gray-400"
+                        : "border-orange-400"
+                    }`}
+                    style={{ minWidth: 180 }}
+                  >
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-400 via-purple-400 to-green-300 flex items-center justify-center mb-2 shadow">
+                      <span className="text-2xl font-bold text-white">{emp.name[0]}</span>
+                    </div>
+                    <div className="text-lg font-bold text-purple-800">{emp.name}</div>
+                    <div className="text-sm text-gray-500 mb-1">{emp.department}</div>
+                    <div className="flex items-center gap-1 text-yellow-600 font-bold text-lg">
+                      {emp.performance} <span>⭐</span>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-400">
+                      {idx === 0 && "🥇 1st"}
+                      {idx === 1 && "🥈 2nd"}
+                      {idx === 2 && "🥉 3rd"}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
           <div className="flex flex-wrap gap-3 justify-center md:justify-between items-center mb-8 bg-gradient-to-r from-purple-100 via-blue-50 to-white rounded-2xl shadow p-4">
             <div className="flex flex-wrap gap-3 items-center">
               {tabButtons.map(tabBtn => (
@@ -362,6 +381,7 @@ const Reports = () => {
               No data available for reports. Please add employees, departments, leaves, etc.
             </div>
           )}
+          {/* ...rest of your existing tab content code remains unchanged... */}
           {tab === "salary" && showSalary && (
             <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
               <div className="flex flex-wrap gap-4 mb-4">
@@ -403,6 +423,7 @@ const Reports = () => {
               </table>
             </div>
           )}
+          {/* ...rest of your existing tab content code remains unchanged... */}
           {tab === "department" && showDepartment && (
             <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
               <div className="mb-8 flex flex-col md:flex-row gap-8">

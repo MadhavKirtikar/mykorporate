@@ -1,14 +1,5 @@
  import React, { useState, useEffect } from "react";
-// import axios from "axios"; // Uncomment if using axios
-
-const USE_DUMMY = true; // Jab backend aayega, sirf isko false kar dena
-
-const DUMMY_EVENTS = [
-  { date: "2025-06-15", title: "Company Holiday", description: "Bakrid Holiday" },
-  { date: "2025-06-20", title: "Team Meeting", description: "Monthly review meeting at 11am" },
-  { date: "2025-06-25", title: "HR Event", description: "Wellness Workshop" },
-  { date: "2025-07-01", title: "Project Deadline", description: "Submit all reports" },
-];
+import axios from "axios";
 
 const CalenderEvents = ({ user }) => {
   const [events, setEvents] = useState([]);
@@ -16,29 +7,14 @@ const CalenderEvents = ({ user }) => {
   const [newEvent, setNewEvent] = useState(null);
 
   useEffect(() => {
-    if (USE_DUMMY) {
-      setTimeout(() => {
-        setEvents(DUMMY_EVENTS);
-        setLoading(false);
-      }, 400);
-      return;
-    }
-    // Replace with your actual API endpoint
-    fetch("/api/events")
-      .then((res) => res.json())
-      .then((data) => {
-        setEvents(data);
+    setLoading(true);
+    axios
+      .get("/api/events")
+      .then((res) => {
+        setEvents(Array.isArray(res.data) ? res.data : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-
-    // Example using axios:
-    // axios.get("/api/events")
-    //   .then(res => {
-    //     setEvents(res.data);
-    //     setLoading(false);
-    //   })
-    //   .catch(() => setLoading(false));
   }, []);
 
   // Show a highlight if a new event is added today
@@ -71,15 +47,12 @@ const CalenderEvents = ({ user }) => {
 
   return (
     <div className="max-w-3xl mx-auto mt-10">
-      {/* Title same style as Settings page */}
       <h2 className="text-4xl font-extrabold text-center tracking-wide mb-10">
         <span className="bg-gradient-to-r from-purple-500 via-blue-400 to-pink-400 bg-clip-text text-transparent drop-shadow">
           Calender Events
         </span>
       </h2>
-      <div className="flex justify-between items-center mb-8">
-        {/* You can add user name or other info here if needed */}
-      </div>
+      <div className="flex justify-between items-center mb-8"></div>
       {newEvent && (
         <div className="mb-6 p-4 rounded-xl bg-green-50 border border-green-200 flex items-center gap-4 shadow animate-pulse">
           <span className="text-2xl">🆕</span>

@@ -1,13 +1,5 @@
  import React, { useState, useEffect } from "react";
-// import axios from "axios"; // Uncomment when backend is ready
-
-const USE_DUMMY = true;
-
-const DUMMY_LEAVES = [
-  { date: "2025-06-10", endDate: "2025-06-10", type: "Sick Leave", reason: "Fever", status: "Approved" },
-  { date: "2025-06-15", endDate: "2025-06-16", type: "Casual Leave", reason: "Family Function", status: "Pending" },
-  { date: "2025-06-20", endDate: "2025-06-22", type: "Earned Leave", reason: "Vacation", status: "Rejected" },
-];
+import axios from "axios";
 
 const FILTERS = [
   { label: "All", color: "bg-purple-100 text-purple-700" },
@@ -25,12 +17,7 @@ const Leaves = ({ user }) => {
 
   useEffect(() => {
     if (!user) return;
-    if (USE_DUMMY) {
-      setLeaves(DUMMY_LEAVES);
-      return;
-    }
-    // Uncomment below when backend is ready
-    /*
+    // Fetch leaves from backend
     const fetchLeaves = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -43,7 +30,6 @@ const Leaves = ({ user }) => {
       }
     };
     fetchLeaves();
-    */
   }, [user]);
 
   if (!user) {
@@ -68,19 +54,6 @@ const Leaves = ({ user }) => {
     setMessage("");
     if (form.date && form.type) {
       if (!form.endDate) form.endDate = form.date;
-      if (USE_DUMMY) {
-        setLeaves([
-          ...leaves,
-          { ...form, status: "Pending" }
-        ]);
-        setForm({ date: "", endDate: "", type: "", reason: "" });
-        setShowForm(false);
-        setMessage("Leave request sent to admin!");
-        setTimeout(() => setMessage(""), 2500);
-        return;
-      }
-      // Uncomment below when backend is ready
-      /*
       try {
         const token = localStorage.getItem("token");
         await axios.post(
@@ -100,7 +73,6 @@ const Leaves = ({ user }) => {
         setLeaves([]);
         setMessage("Failed to send leave request.");
       }
-      */
     }
   };
 

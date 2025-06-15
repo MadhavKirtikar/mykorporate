@@ -1,13 +1,142 @@
  import React, { useEffect, useState } from "react";
-import AdminSidebar from "./AdminSidebar";
 import { useNavigate } from "react-router-dom";
-// import axios from "axios";
+import axios from "axios";
+import { NavLink, useLocation } from 'react-router-dom';
 
-const USE_DUMMY = true;
+// --- AdminSidebar Component (inline for this file) ---
+const AdminSidebar = ({ profilePicUrl }) => {
+    const location = useLocation();
+    const profilePic =
+        profilePicUrl ||
+        localStorage.getItem("adminProfilePic") ||
+        "https://randomuser.me/api/portraits/men/32.jpg";
+    const [adminName, setAdminName] = useState(localStorage.getItem("adminName") || "Admin User");
 
-const DUMMY_PROFILE = { name: "Admin", email: "admin@email.com" };
-const DUMMY_NOTIF = { email: true, sms: false, push: true };
-const DUMMY_LAST_LOGIN = "2025-06-10 14:30";
+    useEffect(() => {
+        const updateName = () => setAdminName(localStorage.getItem("adminName") || "Admin User");
+        window.addEventListener("storage", updateName);
+        const interval = setInterval(updateName, 500);
+        return () => {
+            window.removeEventListener("storage", updateName);
+            clearInterval(interval);
+        };
+    }, []);
+
+    useEffect(() => {
+        setAdminName(localStorage.getItem("adminName") || "Admin User");
+    }, [location.pathname]);
+
+    return (
+        <aside
+            className="bg-white/60 backdrop-blur-md text-black h-screen fixed left-0 top-0 bottom-0 w-72 px-6 py-4 space-y-6 shadow-2xl border-r border-white/30 overflow-y-auto z-50"
+            style={{
+                boxShadow: "0 0 32px 0 rgba(80, 60, 180, 0.13), 0 2px 8px 0 rgba(80, 60, 180, 0.09)"
+            }}
+        >
+            <div className="flex flex-col items-center border-b border-black/20 pb-4">
+                <div className="relative mb-2">
+                    <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-blue-500 via-purple-500 to-blue-400 p-1 shadow-xl flex items-center justify-center">
+                        <img
+                            src={profilePic}
+                            alt="Admin"
+                            className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg"
+                        />
+                        <span className="absolute bottom-3 right-3 w-5 h-5 bg-green-400 border-2 border-white rounded-full"></span>
+                    </div>
+                </div>
+                <div className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-800 to-blue-500 bg-clip-text text-transparent drop-shadow-lg tracking-wide mt-2">
+                    {adminName}
+                </div>
+                <div className="uppercase text-xs tracking-widest text-purple-700 font-semibold mt-1">
+                    Admin Dashboard
+                </div>
+            </div>
+            <nav className="flex flex-col space-y-3 mt-4">
+                <NavLink to="/admin/dashboard" className={({ isActive }) =>
+                    `px-4 py-2 rounded-lg transition-all duration-300 text-lg font-semibold tracking-wide flex items-center gap-2 ${
+                        isActive
+                            ? 'bg-purple-100 text-purple-700 shadow-inner'
+                            : 'text-black hover:bg-gradient-to-r hover:from-purple-300 hover:to-purple-500 hover:text-white hover:shadow-md'
+                    }`
+                }>
+                    <span>🏠</span>
+                    <span className="bg-gradient-to-r from-purple-600 to-blue-400 bg-clip-text text-transparent">Dashboard</span>
+                </NavLink>
+                <NavLink to="/admin/employees" className={({ isActive }) =>
+                    `px-4 py-2 rounded-lg transition-all duration-300 text-lg font-semibold tracking-wide flex items-center gap-2 ${
+                        isActive
+                            ? 'bg-purple-100 text-purple-700 shadow-inner'
+                            : 'text-black hover:bg-gradient-to-r hover:from-purple-300 hover:to-purple-500 hover:text-white hover:shadow-md'
+                    }`
+                }>
+                    <span>👥</span>
+                    <span className="bg-gradient-to-r from-purple-600 to-blue-400 bg-clip-text text-transparent">Employees</span>
+                </NavLink>
+                <NavLink to="/admin/departments" className={({ isActive }) =>
+                    `px-4 py-2 rounded-lg transition-all duration-300 text-lg font-semibold tracking-wide flex items-center gap-2 ${
+                        isActive
+                            ? 'bg-purple-100 text-purple-700 shadow-inner'
+                            : 'text-black hover:bg-gradient-to-r hover:from-purple-300 hover:to-purple-500 hover:text-white hover:shadow-md'
+                    }`
+                }>
+                    <span>🏢</span>
+                    <span className="bg-gradient-to-r from-purple-600 to-blue-400 bg-clip-text text-transparent">Department</span>
+                </NavLink>
+                <NavLink to="/admin/leave" className={({ isActive }) =>
+                    `px-4 py-2 rounded-lg transition-all duration-300 text-lg font-semibold tracking-wide flex items-center gap-2 ${
+                        isActive
+                            ? 'bg-purple-100 text-purple-700 shadow-inner'
+                            : 'text-black hover:bg-gradient-to-r hover:from-purple-300 hover:to-purple-500 hover:text-white hover:shadow-md'
+                    }`
+                }>
+                    <span>📝</span>
+                    <span className="bg-gradient-to-r from-purple-600 to-blue-400 bg-clip-text text-transparent">Leave</span>
+                </NavLink>
+                <NavLink to="/admin/salary" className={({ isActive }) =>
+                    `px-4 py-2 rounded-lg transition-all duration-300 text-lg font-semibold tracking-wide flex items-center gap-2 ${
+                        isActive
+                            ? 'bg-purple-100 text-purple-700 shadow-inner'
+                            : 'text-black hover:bg-gradient-to-r hover:from-purple-300 hover:to-purple-500 hover:text-white hover:shadow-md'
+                    }`
+                }>
+                    <span>💸</span>
+                    <span className="bg-gradient-to-r from-purple-600 to-blue-400 bg-clip-text text-transparent">Salary</span>
+                </NavLink>
+                <NavLink to="/admin/reports" className={({ isActive }) =>
+                    `px-4 py-2 rounded-lg transition-all duration-300 text-lg font-semibold tracking-wide flex items-center gap-2 ${
+                        isActive
+                            ? 'bg-purple-100 text-purple-700 shadow-inner'
+                            : 'text-black hover:bg-gradient-to-r hover:from-purple-300 hover:to-purple-500 hover:text-white hover:shadow-md'
+                    }`
+                }>
+                    <span>📊</span>
+                    <span className="bg-gradient-to-r from-purple-600 to-blue-400 bg-clip-text text-transparent">Reports</span>
+                </NavLink>
+                <NavLink to="/admin/events" className={({ isActive }) =>
+                    `px-4 py-2 rounded-lg transition-all duration-300 text-lg font-semibold tracking-wide flex items-center gap-2 ${
+                        isActive
+                            ? 'bg-purple-100 text-purple-700 shadow-inner'
+                            : 'text-black hover:bg-gradient-to-r hover:from-purple-300 hover:to-purple-500 hover:text-white hover:shadow-md'
+                    }`
+                }>
+                    <span>📅</span>
+                    <span className="bg-gradient-to-r from-purple-600 to-blue-400 bg-clip-text text-transparent">Events</span>
+                </NavLink>
+                <NavLink to="/admin/settings" className={({ isActive }) =>
+                    `px-4 py-2 rounded-lg transition-all duration-300 text-lg font-semibold tracking-wide flex items-center gap-2 ${
+                        isActive
+                            ? 'bg-purple-100 text-purple-700 shadow-inner'
+                            : 'text-black hover:bg-gradient-to-r hover:from-purple-300 hover:to-purple-500 hover:text-white hover:shadow-md'
+                    }`
+                }>
+                    <span>⚙️</span>
+                    <span className="bg-gradient-to-r from-purple-600 to-blue-400 bg-clip-text text-transparent">Settings</span>
+                </NavLink>
+            </nav>
+        </aside>
+    )
+};
+// --- End AdminSidebar ---
 
 const Settings = () => {
   const [show, setShow] = useState(false);
@@ -40,44 +169,65 @@ const Settings = () => {
 
   useEffect(() => {
     setShow(true);
-    if (USE_DUMMY) {
-      setProfile(DUMMY_PROFILE);
-      setNotif(DUMMY_NOTIF);
-      setLastLoginTime(DUMMY_LAST_LOGIN);
-      return;
-    }
-    // ...backend fetch code...
+    // --- Backend fetch code ---
+    axios.get("/api/admin/profile").then(res => {
+      setProfile(res.data.profile);
+      setNotif(res.data.notif);
+      setLastLoginTime(res.data.lastLogin);
+      setProfilePicUrl(res.data.profilePicUrl);
+    }).catch(() => {
+      // fallback if needed
+    });
   }, []);
 
-  const handleProfileChange = (e) => {
+  const handleProfileChange =(e) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
+  // --- Update profile in backend ---
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
-    if (USE_DUMMY) return;
-    // ...backend update code...
+    try {
+      const res = await axios.put("/api/admin/profile", profile);
+      setProfile(res.data.profile);
+      localStorage.setItem("adminName", res.data.profile.name);
+      alert("Profile updated!");
+    } catch (err) {
+      alert("Failed to update profile");
+    }
   };
 
   const handlePasswordChange = (e) => {
     setPasswords({ ...passwords, [e.target.name]: e.target.value });
   };
 
+  // --- Update password in backend ---
   const handlePasswordUpdate = async (e) => {
     e.preventDefault();
-    if (passwords.new !== passwords.confirm) return;
-    if (USE_DUMMY) {
-      setPasswords({ current: "", new: "", confirm: "" });
+    if (passwords.new !== passwords.confirm) {
+      alert("Passwords do not match!");
       return;
     }
-    // ...backend update code...
+    try {
+      await axios.put("/api/admin/password", {
+        current: passwords.current,
+        new: passwords.new,
+      });
+      setPasswords({ current: "", new: "", confirm: "" });
+      alert("Password changed!");
+    } catch (err) {
+      alert("Failed to change password");
+    }
   };
 
   const handleNotifChange = async (e) => {
     const { name, checked } = e.target;
     setNotif((prev) => ({ ...prev, [name]: checked }));
-    if (USE_DUMMY) return;
-    // ...backend update code...
+    try {
+      await axios.put("/api/admin/notifications", { ...notif, [name]: checked });
+    } catch {
+      // Optionally handle error
+    }
   };
 
   // Profile Picture Upload (stylish + preview)
@@ -91,11 +241,18 @@ const Settings = () => {
   };
 
   // Add Profile button click: set as main profile and update sidebar
-  const handleAddProfilePic = () => {
-    if (tempPicUrl) {
-      setProfilePicUrl(tempPicUrl);
-      localStorage.setItem("adminProfilePic", tempPicUrl);
-      setTempPicUrl("");
+  const handleAddProfilePic = async () => {
+    if (tempPicUrl && profilePic) {
+      try {
+        const formData = new FormData();
+        formData.append("profilePic", profilePic);
+        const res = await axios.post("/api/admin/profile-pic", formData);
+        setProfilePicUrl(res.data.url);
+        localStorage.setItem("adminProfilePic", res.data.url);
+        setTempPicUrl("");
+      } catch {
+        alert("Failed to upload profile picture");
+      }
     }
   };
 
@@ -109,10 +266,15 @@ const Settings = () => {
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     setShowDeleteModal(false);
-    alert("Account deleted!");
-    navigate("/");
+    try {
+      await axios.delete("/api/admin/account");
+      alert("Account deleted!");
+      navigate("/");
+    } catch {
+      alert("Failed to delete account");
+    }
   };
 
   const cancelDelete = () => {
@@ -152,7 +314,7 @@ const Settings = () => {
                     className="w-20 h-20 rounded-full object-cover"
                   />
                 </div>
-                  <span className="bg-gradient-to-r from-purple-500 to-blue-400 text-white px-4 py-2 rounded-lg font-semibold shadow hover:from-purple-600 hover:to-blue-500 transition text-sm">
+                <span className="bg-gradient-to-r from-purple-500 to-blue-400 text-white px-4 py-2 rounded-lg font-semibold shadow hover:from-purple-600 hover:to-blue-500 transition text-sm">
                   Choose Profile Image
                 </span>
                 <input

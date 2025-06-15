@@ -1,35 +1,6 @@
  import React, { useState, useEffect } from "react";
 import AdminSidebar from "./AdminSidebar";
-//import axios from "axios";
-
-const USE_DUMMY = true; // Backend aane par false kar dena
-
-const DUMMY_DEPARTMENTS = [
-  { name: "HR" },
-  { name: "IT" },
-  { name: "Finance" },
-];
-
-const DUMMY_LEAVES = [
-  {
-    _id: 1,
-    name: "Amit",
-    department: "HR",
-    from: "2025-06-10",
-    to: "2025-06-12",
-    reason: "Personal",
-    status: "Pending",
-  },
-  {
-    _id: 2,
-    name: "Priya",
-    department: "IT",
-    from: "2025-06-08",
-    to: "2025-06-09",
-    reason: "Medical",
-    status: "Approved",
-  },
-];
+import axios from "axios";
 
 const Leave = () => {
   const [leaves, setLeaves] = useState([]);
@@ -47,30 +18,25 @@ const Leave = () => {
   const [addError, setAddError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
+  // Fetch all leaves and departments from backend
+  const fetchAll = async () => {
+    try {
+      const [leaveRes, deptRes] = await Promise.all([
+        axios.get("/api/leaves"),
+        axios.get("/api/departments"),
+      ]);
+      setLeaves(Array.isArray(leaveRes.data) ? leaveRes.data : []);
+      setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
+    } catch {
+      setLeaves([]);
+      setDepartments([]);
+    }
+  };
+
   useEffect(() => {
     setShow(true);
-
-    if (USE_DUMMY) {
-      setLeaves(DUMMY_LEAVES);
-      setDepartments(DUMMY_DEPARTMENTS);
-      return;
-    }
-
-    // Backend API calls
-    const fetchAll = async () => {
-      try {
-        const [leaveRes, deptRes] = await Promise.all([
-          axios.get("/api/leaves"),
-          axios.get("/api/departments"),
-        ]);
-        setLeaves(Array.isArray(leaveRes.data) ? leaveRes.data : []);
-        setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
-      } catch {
-        setLeaves([]);
-        setDepartments([]);
-      }
-    };
     fetchAll();
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -91,12 +57,8 @@ const Leave = () => {
       setAddError("All fields are required.");
       return;
     }
-    if (USE_DUMMY) {
-      const newLeave = {
-        ...form,
-        _id: Date.now(),
-      };
-      setLeaves([newLeave, ...leaves]);
+    try {
+      await axios.post("/api/leaves", form);
       setSuccessMsg("Leave applied successfully!");
       setForm({
         name: "",
@@ -106,47 +68,36 @@ const Leave = () => {
         reason: "",
         status: "Pending",
       });
-      return;
+      fetchAll();
+    } catch {
+      setAddError("Failed to apply leave.");
     }
-    // Backend add
-    // try {
-    //   await axios.post("/api/leaves", form);
-    //   setSuccessMsg("Leave applied successfully!");
-    // } catch {
-    //   setAddError("Failed to apply leave.");
-    // }
   };
 
-  const handleStatus = (id, status) => {
-    if (USE_DUMMY) {
-      setLeaves(
-        leaves.map((leave) =>
-          leave._id === id ? { ...leave, status } : leave
-        )
-      );
+  const handleStatus = async (id, status) => {
+    try {
+      await axios.patch(`/api/leaves/${id}`, { status });
       setSuccessMsg(`Leave ${status}!`);
-      return;
+      fetchAll();
+    } catch {
+      setAddError("Failed to update leave status.");
     }
-    // Backend update
-    // await axios.patch(`/api/leaves/${id}`, { status });
-    // fetch leaves again or update state
   };
 
   const handleDelete = (id) => {
     setDeleteLeave(id);
   };
 
-  const confirmDelete = () => {
-    if (USE_DUMMY) {
-      setLeaves(leaves.filter((leave) => leave._id !== deleteLeave));
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`/api/leaves/${deleteLeave}`);
       setDeleteLeave(null);
       setSuccessMsg("Leave deleted!");
-      return;
+      fetchAll();
+    } catch {
+      setAddError("Failed to delete leave.");
+      setDeleteLeave(null);
     }
-    // Backend delete
-    // await axios.delete(`/api/leaves/${deleteLeave}`);
-    // fetch leaves again or update state
-    setDeleteLeave(null);
   };
 
   const cancelDelete = () => {
@@ -223,7 +174,7 @@ const Leave = () => {
             >
               <option value="">Select Department</option>
               {departments.map((dept) => (
-                <option key={dept.name} value={dept.name}>
+                <option key={dept.name || dept._id} value={dept.name}>
                   {dept.name}
                 </option>
               ))}

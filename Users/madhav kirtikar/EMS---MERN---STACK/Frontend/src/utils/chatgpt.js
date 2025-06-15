@@ -1,6 +1,11 @@
- 
-export async function sendMessage(input, language) {
-  // Dummy response for frontend development
-  await new Promise(res => setTimeout(res, 700)); // thoda delay for realism
-  return `You said: "${input}"`;
+ import axios from "axios";
+
+export async function sendMessage(message, language, role) {
+  const token = localStorage.getItem("token");
+  const res = await axios.post(
+    "/api/chatgpt",
+    { message, language, role },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return res.data.answer;
 }

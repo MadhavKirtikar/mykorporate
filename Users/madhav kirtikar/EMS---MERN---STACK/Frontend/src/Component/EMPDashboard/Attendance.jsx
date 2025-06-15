@@ -1,16 +1,6 @@
  import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const USE_DUMMY = true; // Jab backend aayega, sirf isko false kar dena
-
-const DUMMY_ATTENDANCE = [
-  { id: 1, date: "2024-06-01", status: "Present", checkIn: "09:10", checkOut: "18:00", note: "On time" },
-  { id: 2, date: "2024-06-02", status: "Absent", checkIn: "", checkOut: "", note: "Sick leave" },
-  { id: 3, date: "2024-06-03", status: "Present", checkIn: "09:05", checkOut: "18:10", note: "" },
-  { id: 4, date: "2024-06-04", status: "Present", checkIn: "09:00", checkOut: "18:00", note: "Perfect" },
-  { id: 5, date: "2024-06-05", status: "Absent", checkIn: "", checkOut: "", note: "Personal" },
-];
-
 const Attendance = () => {
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,13 +12,6 @@ const Attendance = () => {
   useEffect(() => {
     setLoading(true);
     setError("");
-    if (USE_DUMMY) {
-      setTimeout(() => {
-        setAttendance(DUMMY_ATTENDANCE);
-        setLoading(false);
-      }, 500);
-      return;
-    }
     // Backend fetch
     const fetchAttendance = async () => {
       try {
@@ -98,25 +81,6 @@ const Attendance = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Extra: Mark today as present (dummy only)
-  const markTodayPresent = () => {
-    if (USE_DUMMY) {
-      const today = new Date().toISOString().slice(0, 10);
-      if (attendance.some(a => a.date === today)) return;
-      setAttendance([
-        ...attendance,
-        {
-          id: Date.now(),
-          date: today,
-          status: "Present",
-          checkIn: "09:00",
-          checkOut: "",
-          note: "Self marked",
-        },
-      ]);
-    }
-  };
-
   return (
     <div className=" ">
       {/* Title same style as Settings/Calendar/Notifications/Leaves */}
@@ -139,14 +103,6 @@ const Attendance = () => {
           >
             Download CSV
           </button>
-          {USE_DUMMY && (
-            <button
-              className="px-4 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200 hover:bg-green-200 transition"
-              onClick={markTodayPresent}
-            >
-              Mark Today Present
-            </button>
-          )}
         </div>
       </div>
 
@@ -228,7 +184,7 @@ const Attendance = () => {
             </thead>
             <tbody className="bg-white divide-y divide-purple-50">
               {filteredAttendance.map((att) => (
-                <tr key={att.id} className="hover:bg-purple-50 transition">
+                <tr key={att.id || att._id} className="hover:bg-purple-50 transition">
                   <td className="px-4 py-2 font-medium">
                     {new Date(att.date).toLocaleDateString("en-IN", {
                       day: "2-digit",

@@ -1,53 +1,31 @@
- import React, { useState, useRef } from "react";
+ import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-
-// Dummy payslip data for frontend testing
-const DUMMY_PAYSLIPS = [
-  {
-    month: "June 2025",
-    salary: 35000,
-    status: "Paid",
-    details: {
-      basic: 20000,
-      hra: 10000,
-      allowance: 5000,
-      deductions: 2000,
-      net: 33000,
-    },
-  },
-  {
-    month: "May 2025",
-    salary: 35000,
-    status: "Unpaid",
-    details: {
-      basic: 20000,
-      hra: 10000,
-      allowance: 5000,
-      deductions: 3000,
-      net: 32000,
-    },
-  },
-  {
-    month: "April 2025",
-    salary: 35000,
-    status: "Paid",
-    details: {
-      basic: 20000,
-      hra: 10000,
-      allowance: 5000,
-      deductions: 2500,
-      net: 32500,
-    },
-  },
-];
+import axios from "axios";
 
 const SalaryPayslips = ({ user }) => {
-  const [payslips, setPayslips] = useState(DUMMY_PAYSLIPS);
+  const [payslips, setPayslips] = useState([]);
   const [selectedSlip, setSelectedSlip] = useState(null);
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const slipRef = useRef();
+
+  // Fetch payslips from backend
+  useEffect(() => {
+    if (!user) return;
+    const fetchPayslips = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get("/api/payslips", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setPayslips(Array.isArray(res.data) ? res.data : []);
+      } catch {
+        setPayslips([]);
+      }
+    };
+    fetchPayslips();
+  }, [user]);
 
   if (!user) {
     return (
@@ -112,7 +90,7 @@ const SalaryPayslips = ({ user }) => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto rounded-3xl shadow-2xl p-8 mt-8" /* bg-white removed */>
+    <div className="max-w-3xl mx-auto rounded-3xl shadow-2xl p-8 mt-8">
       {/* Title same style as Settings/Calendar/Notifications/Leaves */}
       <h2 className="text-4xl font-extrabold text-center tracking-wide mb-10">
         <span className="bg-gradient-to-r from-purple-500 via-blue-400 to-pink-400 bg-clip-text text-transparent drop-shadow">
@@ -194,7 +172,7 @@ const SalaryPayslips = ({ user }) => {
             {searchedPayslips.map((p, idx) => (
               <tr key={idx} className="border-b last:border-b-0 hover:bg-purple-50 transition">
                 <td className="py-3 px-4 font-semibold">{p.month}</td>
-                <td className="py-3 px-4 font-semibold text-blue-700">₹{p.salary.toLocaleString()}</td>
+                <td className="py-3 px-4 font-semibold text-blue-700">₹{p.salary?.toLocaleString()}</td>
                 <td className="py-3 px-4">
                   <span className={`px-3 py-1 rounded-full text-sm font-bold shadow-sm ${
                     p.status === "Paid"
@@ -241,9 +219,7 @@ const PayslipSlip = React.forwardRef(({ user, payslip }, ref) => (
   <div
     ref={ref}
     className=" "
-    style={{
-      
-    }}
+    style={{}}
   >
     {/* Header with company name and logo */}
     <div className="flex justify-between items-center mb-8 border-b-2 border-purple-100 pb-4">
@@ -302,24 +278,24 @@ const PayslipSlip = React.forwardRef(({ user, payslip }, ref) => (
       <tbody>
         <tr>
           <td className="py-2 px-4 font-semibold">Basic Salary</td>
-          <td className="py-2 px-4 text-right">₹{payslip.details.basic.toLocaleString()}</td>
+          <td className="py-2 px-4 text-right">₹{payslip.details?.basic?.toLocaleString()}</td>
         </tr>
         <tr className="bg-purple-50">
           <td className="py-2 px-4 font-semibold">HRA</td>
-          <td className="py-2 px-4 text-right">₹{payslip.details.hra.toLocaleString()}</td>
+          <td className="py-2 px-4 text-right">₹{payslip.details?.hra?.toLocaleString()}</td>
         </tr>
         <tr>
           <td className="py-2 px-4 font-semibold">Allowance</td>
-          <td className="py-2 px-4 text-right">₹{payslip.details.allowance.toLocaleString()}</td>
+          <td className="py-2 px-4 text-right">₹{payslip.details?.allowance?.toLocaleString()}</td>
         </tr>
         <tr className="bg-purple-50">
           <td className="py-2 px-4 font-semibold">Deductions</td>
-          <td className="py-2 px-4 text-right">₹{payslip.details.deductions.toLocaleString()}</td>
+          <td className="py-2 px-4 text-right">₹{payslip.details?.deductions?.toLocaleString()}</td>
         </tr>
         <tr>
           <td className="py-2 px-4 font-bold text-purple-700 text-lg border-t-2 border-purple-200">Net Salary</td>
           <td className="py-2 px-4 text-right font-bold text-purple-700 text-lg border-t-2 border-purple-200">
-            ₹{payslip.details.net.toLocaleString()}
+            ₹{payslip.details?.net?.toLocaleString()}
           </td>
         </tr>
       </tbody>

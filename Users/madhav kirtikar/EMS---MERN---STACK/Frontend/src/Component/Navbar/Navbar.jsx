@@ -3,17 +3,14 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import searchIcon from '../../Assets/search-b.png';
 import Chatbot from '../CGPT/Chatbot.jsx';
 
+// Sirf public aur employee-relevant pages search me dikhaye, admin/sensitive info nahi
 const searchData = [
   { name: "Home", path: "/" },
   { name: "Login/Register", path: "/login" },
   { name: "About Us", path: "/about" },
   { name: "Contact Us", path: "/contacts" },
-  { name: "Dashboard", path: "/admin/dashboard" },
-  { name: "Employees", path: "/admin/employees" },
-  { name: "Departments", path: "/admin/departments" },
-  { name: "Salary", path: "/admin/salary" },
-  { name: "Leave", path: "/admin/leave" },
-  { name: "Settings", path: "/admin/settings" },
+  { name: "Leave", path: "/admin/leave" }
+  // Dashboard, Employees, Departments, Salary, Settings yahan nahi hain
 ];
 
 const Navbar = () => {

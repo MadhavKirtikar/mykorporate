@@ -1,9 +1,9 @@
  import React from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
-//import axios from "axios";
+import axios from "axios";
 
-const USE_DUMMY = true; // Backend aane par false kar dena
+const USE_DUMMY = false; // Backend aane par false kar dena
 
 const DUMMY_EMPLOYEES = [
   { id: 1, name: "Amit", department: "HR" },
@@ -49,7 +49,8 @@ const Dashboard = () => {
       return;
     }
 
-    // Backend API calls
+    // --- Backend API calls (uncomment when backend ready) ---
+    
     const fetchAll = async () => {
       try {
         const [empRes, deptRes, leaveRes, salRes] = await Promise.all([
@@ -69,8 +70,8 @@ const Dashboard = () => {
         setSalaries([]);
       }
     };
-
     fetchAll();
+    
   }, []);
 
   const totalEmployees = employees.length;
@@ -87,6 +88,7 @@ const Dashboard = () => {
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-purple-200 via-blue-100 to-white">
       <AdminSidebar />
+            
       <main
         className={`flex-1 p-4 md:p-10 ml-0 md:ml-64 transform transition-transform duration-500 ${
           show ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"

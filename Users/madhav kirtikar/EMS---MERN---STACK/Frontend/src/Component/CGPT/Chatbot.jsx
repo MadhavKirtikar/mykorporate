@@ -110,7 +110,7 @@ export default function Chatbot({ open, setOpen }) {
 
   return (
     <div
-      className="fixed z-[9999] bg-transparent"
+      className="fixed z-[9999] bg-transparent h-full"
       style={{
         left: Math.max(0, Math.min(drag.x, window.innerWidth - size.w)),
         top: Math.max(0, Math.min(drag.y, window.innerHeight - size.h)),
@@ -126,23 +126,32 @@ export default function Chatbot({ open, setOpen }) {
     >
       {/* Header */}
       <div
-        className="cursor-move bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 text-white px-6 py-3 rounded-t-2xl flex justify-between items-center select-none shadow"
+        className="cursor-move bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 text-white px-2 py-1 rounded-t-2xl flex justify-between items-center select-none shadow"
         onMouseDown={handleMouseDown}
         onDoubleClick={handleDoubleClick}
-        style={{ fontFamily: "Inter, sans-serif" }}
+        style={{
+          fontFamily: "Inter, sans-serif",
+          minHeight: 24,
+          position: "relative",
+          zIndex: 10 // Ensure header and close button always on top
+        }}
         title="Double click to move from anywhere"
       >
-        <span className="font-bold text-xl flex items-center gap-2 tracking-wide drop-shadow">🤖 C-GPT Chat</span>
+        <span className="font-bold text-[11px] flex items-center gap-1 tracking-wide drop-shadow">🤖 C-GPT Chat</span>
         <button
           onClick={() => setOpen(false)}
-          className="text-white text-2xl font-bold hover:bg-blue-800 hover:text-red-200 rounded-full w-9 h-9 flex items-center justify-center transition"
+          className="text-white text-base font-bold hover:bg-blue-800 hover:text-red-200 rounded-full w-8 h-8 flex items-center justify-center transition"
           aria-label="Close"
+          style={{
+            position: "relative",
+            zIndex: 20 // Always above everything
+          }}
         >×</button>
       </div>
       {/* Main Body */}
-      <div className="rounded-b-2xl shadow-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 via-white to-orange-50 h-full flex flex-col relative">
+      <div className="rounded-b-2xl shadow-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 via-white to-orange-50 h-full flex flex-col">
         {/* Language Selector */}
-        <div className="flex items-center justify-between mb-2 px-6 pt-4">
+        <div className="flex items-center justify-between mb-2 px-4 pt-2">
           <select
             className="p-2 border-2 border-blue-200 rounded-lg bg-white font-semibold text-blue-700 focus:ring-2 focus:ring-blue-400 text-sm shadow"
             value={language}
@@ -156,7 +165,6 @@ export default function Chatbot({ open, setOpen }) {
         {/* Messages */}
         <div
           className="flex-1 h-0 overflow-y-auto p-4 rounded-xl bg-white/90 shadow-inner scrollbar-thin scrollbar-thumb-blue-200"
-          style={{ marginBottom: "90px" }} // Space for input area
         >
           {messages.length === 0 && !loading && (
             <div className="text-center text-gray-400 mt-24 font-semibold text-base">Start the conversation...</div>
@@ -192,16 +200,7 @@ export default function Chatbot({ open, setOpen }) {
         </div>
         {/* Input Area */}
         <div
-          className="flex gap-2 px-6 pb-5 pt-3 overflow-hidden bg-white/95 rounded-b-2xl shadow-lg items-center"
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 10,
-            borderBottomLeftRadius: 24,
-            borderBottomRightRadius: 24,
-          }}
+          className="flex gap-2 px-6 pb-5 pt-4 bg-white/95 rounded-b-2xl shadow-lg items-center"
         >
           <input
             type="text"
@@ -230,10 +229,7 @@ export default function Chatbot({ open, setOpen }) {
             aria-label="Mic"
           >
             {listening ? (
-              <>
-                <span className="animate-bounce">🎤</span>
-                Listening...
-              </>
+              <span className="animate-bounce text-xl">🎤</span>
             ) : (
               <span className="text-xl">🎤</span>
             )}

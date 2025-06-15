@@ -1,13 +1,13 @@
  import React, { useState, useEffect } from "react";
 import AdminSidebar from "./AdminSidebar";
-//import axios from "axios";
+import axios from "axios";
 
-const USE_DUMMY = true; // Backend aane par false kar dena
+const USE_DUMMY = false; // Backend aane par false kar dena
 
 const DUMMY_DEPARTMENTS = [
-  { id: 1, name: "HR", description: "Human Resources", head: "Amit" },
-  { id: 2, name: "IT", description: "Information Technology", head: "Priya" },
-  { id: 3, name: "Finance", description: "Finance Department", head: "Ravi" },
+  { id: 1, name: "HR", description: "Human Resources" },
+  { id: 2, name: "IT", description: "Information Technology" },
+  { id: 3, name: "Finance", description: "Finance Department" },
 ];
 
 const DUMMY_EMPLOYEES = [
@@ -22,7 +22,6 @@ const Department = () => {
   const [form, setForm] = useState({
     name: "",
     description: "",
-    head: "",
   });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -31,32 +30,31 @@ const Department = () => {
   const [deleteDept, setDeleteDept] = useState(null);
   const [show, setShow] = useState(false);
   const [employees, setEmployees] = useState([]);
-  const [showHeadList, setShowHeadList] = useState(false);
 
-  useEffect(() => {
-    setTimeout(() => setShow(true), 50);
-
+  // Fetch departments and employees from backend
+  const fetchAll = async () => {
     if (USE_DUMMY) {
       setDepartments(DUMMY_DEPARTMENTS);
       setEmployees(DUMMY_EMPLOYEES);
       return;
     }
+    try {
+      const [deptRes, empRes] = await Promise.all([
+        axios.get("/api/departments"),
+        axios.get("/api/employees"),
+      ]);
+      setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
+      setEmployees(Array.isArray(empRes.data) ? empRes.data : []);
+    } catch {
+      setDepartments([]);
+      setEmployees([]);
+    }
+  };
 
-    // Backend API calls
-    const fetchAll = async () => {
-      try {
-        const [deptRes, empRes] = await Promise.all([
-          axios.get("/api/departments"),
-          axios.get("/api/employees"),
-        ]);
-        setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
-        setEmployees(Array.isArray(empRes.data) ? empRes.data : []);
-      } catch {
-        setDepartments([]);
-        setEmployees([]);
-      }
-    };
+  useEffect(() => {
+    setTimeout(() => setShow(true), 50);
     fetchAll();
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -73,27 +71,14 @@ const Department = () => {
     }
   }, [error]);
 
-  useEffect(() => {
-    if (!showHeadList) return;
-    const handleClick = (e) => {
-      if (
-        !e.target.closest("#head-input") &&
-        !e.target.closest("#head-suggestion-list")
-      ) {
-        setShowHeadList(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [showHeadList]);
-
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError("");
     setMessage("");
   };
 
-  const handleAdd = (e) => {
+  // ADD department (backend)
+  const handleAdd = async (e) => {
     e.preventDefault();
     setError("");
     setMessage("");
@@ -110,25 +95,30 @@ const Department = () => {
       setError("Department already exists.");
       return;
     }
-    const newDept = {
-      id: Date.now(),
-      name: form.name,
-      description: form.description,
-      head: form.head,
-    };
-    setDepartments([...departments, newDept]);
-    setForm({ name: "", description: "", head: "" });
-    setMessage("Department added successfully!");
+    if (USE_DUMMY) {
+      const newDept = {
+        id: Date.now(),
+        name: form.name,
+        description: form.description,
+      };
+      setDepartments([...departments, newDept]);
+      setForm({ name: "", description: "" });
+      setMessage("Department added successfully!");
+      return;
+    }
+    // Backend POST
+    try {
+      await axios.post("/api/departments", form);
+      setForm({ name: "", description: "" });
+      setMessage("Department added successfully!");
+      fetchAll();
+    } catch {
+      setError("Failed to add department.");
+    }
   };
 
-  const handleEditClick = (dept) => {
-    setEditDept(dept);
-    setForm({ name: dept.name, description: dept.description, head: dept.head || "" });
-    setError("");
-    setMessage("");
-  };
-
-  const handleEditSave = (e) => {
+  // EDIT department (backend)
+  const handleEditSave = async (e) => {
     e.preventDefault();
     setError("");
     setMessage("");
@@ -146,38 +136,76 @@ const Department = () => {
       setError("Department already exists.");
       return;
     }
-    setDepartments(
-      departments.map((d) =>
-        d.id === editDept.id
-          ? { ...d, name: form.name, description: form.description, head: form.head }
-          : d
-      )
-    );
-    setEditDept(null);
-    setForm({ name: "", description: "", head: "" });
-    setMessage("Department updated successfully!");
+    if (USE_DUMMY) {
+      setDepartments(
+        departments.map((d) =>
+          d.id === editDept.id
+            ? { ...d, name: form.name, description: form.description }
+            : d
+        )
+      );
+      setEditDept(null);
+      setForm({ name: "", description: "" });
+      setMessage("Department updated successfully!");
+      return;
+    }
+    // Backend PUT/PATCH
+    try {
+      await axios.put(`/api/departments/${editDept.id}`, form);
+      setEditDept(null);
+      setForm({ name: "", description: "" });
+      setMessage("Department updated successfully!");
+      fetchAll();
+    } catch {
+      setError("Failed to update department.");
+    }
   };
 
-  const handleEditCancel = () => {
-    setEditDept(null);
-    setForm({ name: "", description: "", head: "" });
+  const handleEditClick = (dept) => {
+    setEditDept(dept);
+    setForm({ name: dept.name, description: dept.description });
     setError("");
     setMessage("");
   };
 
-  const handleDeleteClick = (dept) => {
-    setDeleteDept(dept);
+  const handleEditCancel = () => {
+    setEditDept(null);
+    setForm({ name: "", description: "" });
+    setError("");
+    setMessage("");
   };
 
-  const handleDeleteConfirm = () => {
-    setDepartments(departments.filter((d) => d.id !== deleteDept.id));
-    setDeleteDept(null);
-    setMessage("Department deleted.");
-    setError("");
-    if (editDept && editDept.id === deleteDept.id) {
-      setEditDept(null);
-      setForm({ name: "", description: "", head: "" });
+  // DELETE department (backend)
+  const handleDeleteConfirm = async () => {
+    if (USE_DUMMY) {
+      setDepartments(departments.filter((d) => d.id !== deleteDept.id));
+      setDeleteDept(null);
+      setMessage("Department deleted.");
+      setError("");
+      if (editDept && editDept.id === deleteDept.id) {
+        setEditDept(null);
+        setForm({ name: "", description: "" });
+      }
+      return;
     }
+    // Backend DELETE
+    try {
+      await axios.delete(`/api/departments/${deleteDept.id}`);
+      setDeleteDept(null);
+      setMessage("Department deleted.");
+      setError("");
+      if (editDept && editDept.id === deleteDept.id) {
+        setEditDept(null);
+        setForm({ name: "", description: "" });
+      }
+      fetchAll();
+    } catch {
+      setError("Failed to delete department.");
+    }
+  };
+
+  const handleDeleteClick = (dept) => {
+    setDeleteDept(dept);
   };
 
   const handleDeleteCancel = () => {
@@ -187,8 +215,7 @@ const Department = () => {
   const filteredDepartments = departments.filter(
     (dept) =>
       dept.name.toLowerCase().includes(search.toLowerCase()) ||
-      dept.description.toLowerCase().includes(search.toLowerCase()) ||
-      (dept.head && dept.head.toLowerCase().includes(search.toLowerCase()))
+      dept.description.toLowerCase().includes(search.toLowerCase())
   );
 
   const getEmployeeCount = (deptName) =>
@@ -233,7 +260,7 @@ const Department = () => {
           )}
 
           <form
-            className="mb-10 bg-white/80 rounded-2xl shadow-2xl p-8 grid grid-cols-1 md:grid-cols-4 gap-6 items-end border border-purple-100"
+            className="mb-10 bg-white/80 rounded-2xl shadow-2xl p-8 grid grid-cols-1 md:grid-cols-3 gap-6 items-end border border-purple-100"
             onSubmit={editDept ? handleEditSave : handleAdd}
           >
             <input
@@ -250,46 +277,6 @@ const Department = () => {
               onChange={handleChange}
               placeholder="Description"
             />
-            <div className="relative">
-              <input
-                id="head-input"
-                className="border-2 border-purple-200 focus:border-purple-500 p-3 rounded-lg w-full transition"
-                name="head"
-                value={form.head}
-                onChange={handleChange}
-                placeholder="Department Head"
-                autoComplete="off"
-                onFocus={() => setShowHeadList(true)}
-              />
-              {form.head && showHeadList && (
-                <div
-                  id="head-suggestion-list"
-                  className="bg-white border border-purple-200 rounded shadow mt-1 max-h-32 overflow-y-auto z-20 absolute w-full"
-                >
-                  {employees
-                    .filter((emp) =>
-                      emp.name.toLowerCase().includes(form.head.toLowerCase())
-                    )
-                    .map((emp) => (
-                      <div
-                        key={emp.id}
-                        className="px-4 py-2 hover:bg-purple-100 cursor-pointer"
-                        onClick={() => {
-                          setForm({ ...form, head: emp.name });
-                          setShowHeadList(false);
-                        }}
-                      >
-                        {emp.name}
-                      </div>
-                    ))}
-                  {employees.filter((emp) =>
-                    emp.name.toLowerCase().includes(form.head.toLowerCase())
-                  ).length === 0 && (
-                    <div className="px-4 py-2 text-gray-400">No employee found</div>
-                  )}
-                </div>
-              )}
-            </div>
             {editDept ? (
               <div className="flex gap-2">
                 <button
@@ -349,9 +336,6 @@ const Department = () => {
                     <th className="px-6 py-4 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
                       Description
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-purple-700 uppercase tracking-wider">
-                      Head
-                    </th>
                     <th className="px-6 py-4 text-center text-xs font-bold text-purple-700 uppercase tracking-wider">
                       Employees
                     </th>
@@ -379,7 +363,6 @@ const Department = () => {
                           {dept.name}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">{dept.description}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{dept.head || <span className="text-gray-400">-</span>}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <span className="font-bold text-purple-700">{getEmployeeCount(dept.name)}</span>
                         </td>

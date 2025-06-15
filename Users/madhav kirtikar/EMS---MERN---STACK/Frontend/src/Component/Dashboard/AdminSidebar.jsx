@@ -1,18 +1,47 @@
- import React from 'react'
+ import React, { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import axios from 'axios'
+
+const USE_DUMMY = false; // Set to false when backend is ready
 
 const AdminSidebar = ({ profilePicUrl }) => {
     const location = useLocation();
 
-    // Profile image priority: prop → localStorage → default
-    const profilePic =
+    // Profile image state
+    const [profilePic, setProfilePic] = useState(
         profilePicUrl ||
         localStorage.getItem("adminProfilePic") ||
-        "https://randomuser.me/api/portraits/men/32.jpg";
+        "https://randomuser.me/api/portraits/men/32.jpg"
+    );
 
-    // Dummy admin data, replace with real data from context or backend
+    // Admin name state
+    const [adminName, setAdminName] = useState(localStorage.getItem("adminName") || "Admin User");
+
+    // Update name if changed in localStorage (on profile update)
+    useEffect(() => {
+        const onStorage = () => setAdminName(localStorage.getItem("adminName") || "Admin User");
+        window.addEventListener("storage", onStorage);
+        return () => window.removeEventListener("storage", onStorage);
+    }, []);
+
+    // Also update on route change (for instant update in same tab)
+    useEffect(() => {
+        setAdminName(localStorage.getItem("adminName") || "Admin User");
+    }, [location.pathname]);
+
+    // --- Backend: fetch admin info here ---
+    useEffect(() => {
+        if (!USE_DUMMY) {
+            axios.get("/api/admin/profile").then(res => {
+                setAdminName(res.data.name || "Admin User");
+                setProfilePic(res.data.profilePicUrl || profilePic);
+            });
+        }
+        // eslint-disable-next-line
+    }, []);
+
     const admin = {
-        name: "Admin User",
+        name: adminName,
         profilePic
     };
 
@@ -34,16 +63,19 @@ const AdminSidebar = ({ profilePicUrl }) => {
                         <span className="absolute bottom-3 right-3 w-5 h-5 bg-green-400 border-2 border-white rounded-full"></span>
                     </div>
                 </div>
-                <div className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-800 to-blue-500 bg-clip-text text-transparent drop-shadow-lg tracking-wide mt-2">
-                    {admin.name}
-                </div>
+                {/* Only show name if adminName exists */}
+                {admin.name && (
+                    <div className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-800 to-blue-500 bg-clip-text text-transparent drop-shadow-lg tracking-wide mt-2">
+                        {admin.name}
+                    </div>
+                )}
                 <div className="uppercase text-xs tracking-widest text-purple-700 font-semibold mt-1">
                     Admin Dashboard
                 </div>
             </div>
             <nav className="flex flex-col space-y-3 mt-4">
                 <NavLink
-                    to="/admin/dashboard"
+                    to="/admin/dashboard" end 
                     className={({ isActive }) =>
                         `px-4 py-2 rounded-lg transition-all duration-300 text-lg font-semibold tracking-wide flex items-center gap-2 ${
                             isActive

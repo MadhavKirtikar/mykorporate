@@ -1,63 +1,30 @@
  import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-// import axios from 'axios'; // Jab backend ready ho, isko uncomment karo
+import axios from 'axios';
 import logicBg from "../../Assets/logic.jpg";
 
 // =====================
-// Dummy API Functions (replace with real API calls when backend is ready)
+// Real API Functions (backend)
 const employeeLogin = async ({ email, password }) => {
-  if (email === "employee@example.com" && password === "password") {
-    return { data: { token: "dummy-emp-token" } };
-  } else {
-    throw new Error("Invalid credentials");
-  }
-  // Real API call (uncomment when backend ready)
-  /*
   const res = await axios.post("/api/employee/login", { email, password });
   return res;
-  */
 };
 
 const adminLogin = async ({ username, password }) => {
-  if (username === "admin" && password === "adminpass") {
-    return { data: { token: "dummy-admin-token" } };
-  } else {
-    throw new Error("Invalid credentials");
-  }
-  // Real API call (uncomment when backend ready)
-  /*
   const res = await axios.post("/api/admin/login", { username, password });
   return res;
-  */
 };
 
 const adminRegister = async ({ username, email, password }) => {
-  if (localStorage.getItem("adminCreated")) {
-    throw new Error("Admin already exists");
-  }
-  if (username && email && password) {
-    localStorage.setItem("adminCreated", "yes");
-    return { data: { token: "dummy-admin-register-token" } };
-  } else {
-    throw new Error("Registration failed. Please fill all fields.");
-  }
-  // Real API call (uncomment when backend ready)
-  /*
   const res = await axios.post("/api/admin/register", { username, email, password });
   return res;
-  */
 };
 // =====================
 
-// Utility: Check if admin exists (dummy, backend ke baad yahan API call karna)
-const checkAdminExists = () => {
-  // Dummy: localStorage flag
-  return !!localStorage.getItem("adminCreated");
-  // Real API call (uncomment when backend ready)
-  /*
-  // const res = await axios.get("/api/admin-exists");
-  // return res.data.exists;
-  */
+// Utility: Check if admin exists (backend)
+const checkAdminExists = async () => {
+  const res = await axios.get("/api/admin-exists");
+  return res.data.exists;
 };
 
 const LoginRegister = () => {
@@ -84,7 +51,14 @@ const LoginRegister = () => {
 
   // Check admin existence on mount and after register/delete
   useEffect(() => {
-    setAdminExists(checkAdminExists());
+    (async () => {
+      try {
+        const exists = await checkAdminExists();
+        setAdminExists(exists);
+      } catch {
+        setAdminExists(false);
+      }
+    })();
   }, [showAdminRegister, showAdminLogin]);
 
   // Remember Me: Load from localStorage on mount
@@ -171,7 +145,6 @@ const LoginRegister = () => {
         password: registerPassword,
       });
       localStorage.setItem('token', res.data.token);
-      localStorage.setItem('adminCreated', 'yes'); // Set admin created flag
       setShowAdminRegister(false);
       setShowAdminLogin(true);
       setAdminUsername(registerUsername);
@@ -179,7 +152,7 @@ const LoginRegister = () => {
       setAdminExists(true);
       navigate('/admin/dashboard');
     } catch (err) {
-      setRegisterError(err.message || 'Registration failed. Username or email may already exist.');
+      setRegisterError(err.response?.data?.message || 'Registration failed. Username or email may already exist.');
     }
   };
 
@@ -277,7 +250,6 @@ const LoginRegister = () => {
                   Admin Login
                 </button>
               </p>
-              {/* Register option only if admin does not exist */}
               {!adminExists && (
                 <p className="text-center text-gray-300 text-xs">
                   New Admin?{' '}
@@ -365,7 +337,6 @@ const LoginRegister = () => {
                 <span>Login</span>
               </button>
               {error && <div className="text-red-400 text-xs text-center">{error}</div>}
-              {/* Register option only if admin does not exist */}
               {!adminExists && (
                 <p className="text-center text-gray-300 text-xs">
                   New Admin?{' '}

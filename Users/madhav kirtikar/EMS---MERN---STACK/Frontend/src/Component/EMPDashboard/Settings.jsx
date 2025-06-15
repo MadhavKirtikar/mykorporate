@@ -1,48 +1,39 @@
  import React, { useState, useRef, useEffect } from "react";
-// import axios from "axios"; // Uncomment when backend is ready
-
-const USE_DUMMY = true; // Jab backend aayega, sirf isko false kar dena
-
-const DUMMY_USER = {
-  name: "Amit Kumar",
-  email: "amit@demo.com",
-  phone: "9876543210",
-  department: "HR",
-  notifications: true,
-  password: "",
-  confirmPassword: "",
-  profile: localStorage.getItem("profile") || "",
-};
+import axios from "axios";
 
 const Settings = () => {
-  const [user, setUser] = useState(DUMMY_USER);
+  const [user, setUser] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    department: "",
+    notifications: true,
+    password: "",
+    confirmPassword: "",
+    profile: localStorage.getItem("profile") || "",
+  });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [profilePreview, setProfilePreview] = useState(user.profile);
   const fileInputRef = useRef();
 
-  // Load user from backend/localStorage on mount (for backend support)
+  // Load user from backend/localStorage on mount
   useEffect(() => {
-    if (!USE_DUMMY) {
-      // Uncomment and use when backend is ready
-      /*
-      const fetchUser = async () => {
-        try {
-          const token = localStorage.getItem("token");
-          const res = await axios.get("/api/employee/settings", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setUser({ ...res.data, password: "", confirmPassword: "" });
-          setProfilePreview(res.data.profile || "");
-          if (res.data.profile) localStorage.setItem("profile", res.data.profile);
-        } catch {
-          setMessage("Failed to load user data.");
-        }
-      };
-      fetchUser();
-      */
-    }
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get("/api/employee/settings", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUser({ ...res.data, password: "", confirmPassword: "" });
+        setProfilePreview(res.data.profile || "");
+        if (res.data.profile) localStorage.setItem("profile", res.data.profile);
+      } catch {
+        setMessage("Failed to load user data.");
+      }
+    };
+    fetchUser();
   }, []);
 
   // Handle input changes
@@ -70,7 +61,7 @@ const Settings = () => {
     reader.readAsDataURL(file);
   };
 
-  // Handle save (dummy/backend switch)
+  // Handle save
   const handleSave = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -83,21 +74,11 @@ const Settings = () => {
     if (user.profile) {
       localStorage.setItem("profile", user.profile); // Sidebar sync
     }
-    if (USE_DUMMY) {
-      setTimeout(() => {
-        setLoading(false);
-        setMessage("Settings saved!");
-      }, 800);
-      return;
-    }
     try {
-      // Uncomment and update endpoint when backend is ready
-      /*
       const token = localStorage.getItem("token");
       await axios.put("/api/employee/settings", user, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      */
       setMessage("Settings saved!");
       if (user.profile) localStorage.setItem("profile", user.profile);
     } catch {
@@ -119,7 +100,7 @@ const Settings = () => {
       <form
         onSubmit={handleSave}
         className="space-y-8 rounded-3xl shadow-2xl p-12 border border-purple-100"
-        style={{ background: "none" }} // BG hata diya
+        style={{ background: "none" }}
       >
         {/* Profile Picture */}
         <div className="flex flex-col items-center gap-3">

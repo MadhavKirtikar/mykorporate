@@ -1,13 +1,6 @@
  import React, { useState, useEffect } from "react";
 import AdminSidebar from "./AdminSidebar";
-//import axios from "axios";
-
-const USE_DUMMY = true; // Backend aane par false kar dena
-
-const DUMMY_EVENTS = [
-  { id: 1, type: "Holiday", title: "Independence Day", date: "2025-08-15", details: "National Holiday" },
-  { id: 2, type: "Function", title: "Annual Day", date: "2025-12-20", details: "Cultural Program" },
-];
+import axios from "axios";
 
 const typeColors = {
   Holiday: "bg-green-100 text-green-700 border-green-300",
@@ -24,57 +17,49 @@ const AdminEvents = () => {
   const [form, setForm] = useState({ type: "Holiday", title: "", date: "", details: "" });
   const [deleteId, setDeleteId] = useState(null);
 
-  useEffect(() => {
-    if (USE_DUMMY) {
-      setEvents(DUMMY_EVENTS);
-      return;
+  // Fetch events from backend
+  const fetchEvents = async () => {
+    try {
+      const res = await axios.get("/api/events");
+      setEvents(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setEvents([]);
     }
-    // Backend API call
-    const fetchEvents = async () => {
-      try {
-        const res = await axios.get("/api/events");
-        setEvents(Array.isArray(res.data) ? res.data : []);
-      } catch {
-        setEvents([]);
-      }
-    };
+  };
+
+  useEffect(() => {
     fetchEvents();
+    // eslint-disable-next-line
   }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleAdd = (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
     if (!form.title || !form.date) return;
-    if (USE_DUMMY) {
-      setEvents([
-        ...events,
-        { ...form, id: Date.now() }
-      ]);
+    try {
+      await axios.post("/api/events", form);
+      await fetchEvents();
       setForm({ type: "Holiday", title: "", date: "", details: "" });
-      return;
+    } catch {
+      // Optionally show error
     }
-    // Backend add
-    // await axios.post("/api/events", form);
-    // fetch events again or update state accordingly
   };
 
   const confirmDelete = (id) => {
     setDeleteId(id);
   };
 
-  const handleDelete = () => {
-    if (USE_DUMMY) {
-      setEvents(events.filter(ev => ev.id !== deleteId));
+  const handleDelete = async () => {
+    try {
+      await axios.delete(`/api/events/${deleteId}`);
+      await fetchEvents();
       setDeleteId(null);
-      return;
+    } catch {
+      // Optionally show error
     }
-    // Backend delete
-    // await axios.delete(`/api/events/${deleteId}`);
-    // fetch events again or update state accordingly
-    setDeleteId(null);
   };
 
   const handleCancelDelete = () => {

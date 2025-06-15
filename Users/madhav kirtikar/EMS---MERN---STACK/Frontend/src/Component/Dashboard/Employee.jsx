@@ -1,49 +1,8 @@
  import React, { useState, useEffect } from "react";
 import AdminSidebar from "./AdminSidebar";
-//import axios from "axios"; // Add this for backend support
-
-const USE_DUMMY = true; // Backend aane par false kar dena
+import axios from "axios";
 
 const defaultProfile = "https://ui-avatars.com/api/?background=8b5cf6&color=fff&name=EMP";
-
-const DUMMY_DEPARTMENTS = [
-  { id: 1, name: "HR" },
-  { id: 2, name: "IT" },
-  { id: 3, name: "Finance" },
-];
-
-const DUMMY_EMPLOYEES = [
-  {
-    id: 1,
-    name: "Amit",
-    department: "HR",
-    position: "Manager",
-    email: "amit@demo.com",
-    phone: "9876543210",
-    address: "Delhi",
-    salary: "25000",
-    password: "emp123",
-    photo: "",
-    performance: 4.5,
-    gender: "Male",
-    age: 30,
-  },
-  {
-    id: 2,
-    name: "Priya",
-    department: "IT",
-    position: "Developer",
-    email: "priya@demo.com",
-    phone: "9876543211",
-    address: "Mumbai",
-    salary: "30000",
-    password: "emp123",
-    photo: "",
-    performance: 4.2,
-    gender: "Female",
-    age: 28,
-  },
-];
 
 const emptyForm = {
   name: "",
@@ -80,30 +39,25 @@ const Employee = () => {
   const [successMsg, setSuccessMsg] = useState("");
   const [editPerformance, setEditPerformance] = useState("");
 
+  // Fetch departments and employees from backend
+  const fetchAll = async () => {
+    try {
+      const [deptRes, empRes] = await Promise.all([
+        axios.get("/api/departments"),
+        axios.get("/api/employees"),
+      ]);
+      setDepartmentsList(Array.isArray(deptRes.data) ? deptRes.data : []);
+      setEmployees(Array.isArray(empRes.data) ? empRes.data : []);
+    } catch {
+      setDepartmentsList([]);
+      setEmployees([]);
+    }
+  };
+
   useEffect(() => {
     setTimeout(() => setShow(true), 50);
-
-    if (USE_DUMMY) {
-      setDepartmentsList(DUMMY_DEPARTMENTS);
-      setEmployees(DUMMY_EMPLOYEES);
-      return;
-    }
-
-    // Backend API calls
-    const fetchAll = async () => {
-      try {
-        const [deptRes, empRes] = await Promise.all([
-          axios.get("/api/departments"),
-          axios.get("/api/employees"),
-        ]);
-        setDepartmentsList(Array.isArray(deptRes.data) ? deptRes.data : []);
-        setEmployees(Array.isArray(empRes.data) ? empRes.data : []);
-      } catch {
-        setDepartmentsList([]);
-        setEmployees([]);
-      }
-    };
     fetchAll();
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -133,7 +87,8 @@ const Employee = () => {
     setAddError("");
   };
 
-  const handleAdd = (e) => {
+  // ADD employee (backend)
+  const handleAdd = async (e) => {
     e.preventDefault();
     if (!form.name || !form.department) {
       setAddError("Name and Department are required.");
@@ -151,17 +106,17 @@ const Employee = () => {
       setAddError("Valid age (18-70) is required.");
       return;
     }
-    const newEmp = {
-      ...form,
-      id: Date.now(),
-      performance: 0,
-    };
-    setEmployees([...employees, newEmp]);
-    setSuccessMsg("Employee added successfully!");
-    setForm(emptyForm);
-    setShowAddForm(false);
-    setAddError("");
-    setShowPassword(false);
+    try {
+      await axios.post("/api/employees", { ...form, performance: 0 });
+      setSuccessMsg("Employee added successfully!");
+      setForm(emptyForm);
+      setShowAddForm(false);
+      setAddError("");
+      setShowPassword(false);
+      fetchAll();
+    } catch {
+      setAddError("Failed to add employee.");
+    }
   };
 
   const handleEdit = (emp) => {
@@ -173,7 +128,8 @@ const Employee = () => {
     setShowPassword(false);
   };
 
-  const handleUpdate = (e) => {
+  // UPDATE employee (backend)
+  const handleUpdate = async (e) => {
     e.preventDefault();
     if (!form.name || !form.department) {
       setAddError("Name and Department are required.");
@@ -195,21 +151,20 @@ const Employee = () => {
       setAddError("Performance rating must be between 1 and 5.");
       return;
     }
-    setEmployees(
-      employees.map((emp) =>
-        emp.id === selectedEmp.id
-          ? { ...form, id: emp.id, performance: editPerformance }
-          : emp
-      )
-    );
-    setEditMode(false);
-    setSelectedEmp(null);
-    setSuccessMsg("Employee updated successfully!");
-    setForm(emptyForm);
-    setShowAddForm(false);
-    setAddError("");
-    setShowPassword(false);
-    setEditPerformance("");
+    try {
+      await axios.put(`/api/employees/${selectedEmp.id}`, { ...form, performance: editPerformance });
+      setSuccessMsg("Employee updated successfully!");
+      setForm(emptyForm);
+      setShowAddForm(false);
+      setEditMode(false);
+      setSelectedEmp(null);
+      setAddError("");
+      setShowPassword(false);
+      setEditPerformance("");
+      fetchAll();
+    } catch {
+      setAddError("Failed to update employee.");
+    }
   };
 
   const handleDeleteClick = (emp) => {
@@ -217,14 +172,20 @@ const Employee = () => {
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    setEmployees(employees.filter((emp) => emp.id !== empToDelete.id));
-    setShowDeleteModal(false);
-    setEmpToDelete(null);
-    setSelectedEmp(null);
-    setEditMode(false);
-    setViewEmp(null);
-    setSuccessMsg("Employee deleted successfully!");
+  // DELETE employee (backend)
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`/api/employees/${empToDelete.id}`);
+      setShowDeleteModal(false);
+      setEmpToDelete(null);
+      setSelectedEmp(null);
+      setEditMode(false);
+      setViewEmp(null);
+      setSuccessMsg("Employee deleted successfully!");
+      fetchAll();
+    } catch {
+      setAddError("Failed to delete employee.");
+    }
   };
 
   const cancelDelete = () => {

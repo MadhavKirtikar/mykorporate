@@ -2,9 +2,8 @@
 import AdminSidebar from "./AdminSidebar";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-//import axios from "axios";
+import axios from "axios";
 
-const USE_DUMMY = true; // Set to false when backend is ready
 const monthColors = {
   January: "bg-blue-100 text-blue-700",
   February: "bg-pink-100 text-pink-700",
@@ -20,24 +19,6 @@ const monthColors = {
   December: "bg-cyan-100 text-cyan-700",
 };
 
-const DUMMY_SALARIES = [
-  { id: 1, name: "Amit", department: "HR", month: "June", amount: 25000, status: "Paid" },
-  { id: 2, name: "Priya", department: "IT", month: "May", amount: 30000, status: "Paid" },
-  { id: 3, name: "Ravi", department: "Finance", month: "April", amount: 22000, status: "Pending" },
-];
-
-const DUMMY_EMPLOYEES = [
-  { id: 1, name: "Amit", department: "HR", salary: 25000 },
-  { id: 2, name: "Priya", department: "IT", salary: 30000 },
-  { id: 3, name: "Ravi", department: "Finance", salary: 22000 },
-];
-
-const DUMMY_DEPARTMENTS = [
-  { id: 1, name: "HR" },
-  { id: 2, name: "IT" },
-  { id: 3, name: "Finance" },
-];
-
 const Salary = () => {
   const [salaries, setSalaries] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -50,7 +31,7 @@ const Salary = () => {
   const empSelectRef = useRef();
   const receiptRef = useRef();
 
-   useEffect(() => {
+  useEffect(() => {
     if (message) {
       const timer = setTimeout(() => setMessage(""), 3000);
       return () => clearTimeout(timer);
@@ -63,30 +44,27 @@ const Salary = () => {
       return () => clearTimeout(timer);
     }
   }, [error]);
-useEffect(() => {
-  if (USE_DUMMY) {
-    setSalaries(DUMMY_SALARIES);
-  setEmployees(DUMMY_EMPLOYEES);
-  setDepartments(DUMMY_DEPARTMENTS);
-    return;
-  }
-  const fetchData = async () => {
-    try {
-      const [salRes, empRes, deptRes] = await Promise.all([
-        axios.get("/api/salaries"),
-        axios.get("/api/employees"),
-        axios.get("/api/departments"),
-      ]);
-      setSalaries(Array.isArray(salRes.data) ? salRes.data : []);
-      setEmployees(Array.isArray(empRes.data) ? empRes.data : []);
-      setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
-    } catch (error) {
-      setSalaries([]);
-      setEmployees([]);
-      setDepartments([]);
-    }
-  } 
-}, []);
+
+  useEffect(() => {
+    // Fetch salaries, employees, departments from backend
+    const fetchData = async () => {
+      try {
+        const [salRes, empRes, deptRes] = await Promise.all([
+          axios.get("/api/salaries"),
+          axios.get("/api/employees"),
+          axios.get("/api/departments"),
+        ]);
+        setSalaries(Array.isArray(salRes.data) ? salRes.data : []);
+        setEmployees(Array.isArray(empRes.data) ? empRes.data : []);
+        setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
+      } catch (error) {
+        setSalaries([]);
+        setEmployees([]);
+        setDepartments([]);
+      }
+    };
+    fetchData();
+  }, []);
 
   const filteredSalaries = Array.isArray(salaries)
     ? salaries.filter(
@@ -96,7 +74,6 @@ useEffect(() => {
           salary.month?.toLowerCase().includes(search.toLowerCase())
       )
     : [];
-    
 
   const totalPaid = Array.isArray(salaries)
     ? salaries
@@ -110,7 +87,7 @@ useEffect(() => {
         .reduce((sum, s) => sum + Number(s.amount), 0)
     : 0;
 
-  const handleAdd = (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
     setError("");
     setMessage("");
@@ -118,17 +95,22 @@ useEffect(() => {
       setError("All fields are required.");
       return;
     }
-    const newSalary = {
-      id: Date.now(),
-      name: form.name,
-      department: form.department,
-      month: form.month,
-      amount: form.amount,
-      status: "Pending",
-    };
-    setSalaries([...salaries, newSalary]);
-    setForm({ name: "", department: "", month: "", amount: "" });
-    setMessage("Salary added successfully.");
+    try {
+      await axios.post("/api/salaries", {
+        name: form.name,
+        department: form.department,
+        month: form.month,
+        amount: form.amount,
+        status: "Pending",
+      });
+      setMessage("Salary added successfully.");
+      setForm({ name: "", department: "", month: "", amount: "" });
+      // Refresh data
+      const salRes = await axios.get("/api/salaries");
+      setSalaries(Array.isArray(salRes.data) ? salRes.data : []);
+    } catch {
+      setError("Failed to add salary.");
+    }
   };
 
   const handleChange = (e) => {
@@ -138,57 +120,66 @@ useEffect(() => {
   const handleEmpKeyDown = () => {};
 
   const handleDownloadReceipt = (salary) => {
-    console.log("salary object:", salary);
-    
-  const doc = new jsPDF();
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.setTextColor("#6D28D9");
-  doc.text("Salary Receipt", 14, 18);
-  doc.setFontSize(12);
-  doc.setTextColor("#374151");
-  doc.text(`Employee: ${salary.name}`, 14, 30);
-  doc.text(`Department: ${salary.department}`, 14, 38);
-  doc.text(`Month: ${salary.month}`, 14, 46);
-  doc.text(`Amount: ₹${salary.amount}`, 14, 54);
-  doc.text(`Status: ${salary.status}`, 14, 62);
+    const doc = new jsPDF();
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor("#6D28D9");
+    doc.text("Salary Receipt", 14, 18);
+    doc.setFontSize(12);
+    doc.setTextColor("#374151");
+    doc.text(`Employee: ${salary.name}`, 14, 30);
+    doc.text(`Department: ${salary.department}`, 14, 38);
+    doc.text(`Month: ${salary.month}`, 14, 46);
+    doc.text(`Amount: ₹${salary.amount}`, 14, 54);
+    doc.text(`Status: ${salary.status}`, 14, 62);
 
-  autoTable(doc, {
-    startY: 70,
-    head: [["Field", "Value"]],
-    body: [
-      ["Employee", salary.name],
-      ["Department", salary.department],
-      ["Month", salary.month],
-      ["Amount", `₹${salary.amount}`],
-      ["Status", salary.status],
-    ],
-    theme: "striped",
-    headStyles: { fillColor: [167, 139, 250], textColor: 255, fontStyle: "bold" },
-    styles: { fontSize: 11, cellPadding: 3 },
-    alternateRowStyles: { fillColor: [243, 232, 255] }
-  });
+    autoTable(doc, {
+      startY: 70,
+      head: [["Field", "Value"]],
+      body: [
+        ["Employee", salary.name],
+        ["Department", salary.department],
+        ["Month", salary.month],
+        ["Amount", `₹${salary.amount}`],
+        ["Status", salary.status],
+      ],
+      theme: "striped",
+      headStyles: { fillColor: [167, 139, 250], textColor: 255, fontStyle: "bold" },
+      styles: { fontSize: 11, cellPadding: 3 },
+      alternateRowStyles: { fillColor: [243, 232, 255] }
+    });
 
-  doc.save(`Salary-Receipt-${salary.name}-${salary.month}.pdf`);
-};
+    doc.save(`Salary-Receipt-${salary.name}-${salary.month}.pdf`);
+  };
 
-  const handleMarkAsPaid = (salary) => {
-    setSalaries(
-      salaries.map((s) =>
-        s.id === salary.id ? { ...s, status: "Paid" } : s
-      )
-    );
-    setMessage("Marked as paid.");
+  const handleMarkAsPaid = async (salary) => {
+    try {
+      await axios.patch(`/api/salaries/${salary._id || salary.id}`, { status: "Paid" });
+      setMessage("Marked as paid.");
+      // Refresh data
+      const salRes = await axios.get("/api/salaries");
+      setSalaries(Array.isArray(salRes.data) ? salRes.data : []);
+    } catch {
+      setError("Failed to mark as paid.");
+    }
   };
 
   const handleDelete = (id) => {
     setDeleteSalary(id);
   };
 
-  const confirmDelete = () => {
-    setSalaries(salaries.filter((s) => s.id !== deleteSalary));
-    setMessage("Salary record deleted.");
-    setDeleteSalary(null);
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`/api/salaries/${deleteSalary}`);
+      setMessage("Salary record deleted.");
+      setDeleteSalary(null);
+      // Refresh data
+      const salRes = await axios.get("/api/salaries");
+      setSalaries(Array.isArray(salRes.data) ? salRes.data : []);
+    } catch {
+      setError("Failed to delete salary record.");
+      setDeleteSalary(null);
+    }
   };
 
   const cancelDelete = () => setDeleteSalary(null);
@@ -197,8 +188,6 @@ useEffect(() => {
     <div className="flex min-h-screen bg-gradient-to-br from-[#f3f4f6] via-[#e0e7ff] to-[#fdf2f8]">
       <AdminSidebar />
       <main className="flex-1 p-4 md:p-10 ml-0 md:ml-64">
-        
- 
         <div className="max-w-5xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-blue-500 to-pink-400 drop-shadow-lg text-center w-full">
@@ -227,7 +216,6 @@ useEffect(() => {
               </div>
             </div>
           )}
- 
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="flex-1 flex gap-4">
               <div className="flex-1 bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-xl font-semibold shadow-sm text-center">
@@ -257,7 +245,6 @@ useEffect(() => {
               </div>
             </div>
           </div>
-          
           <form
             className="mb-10 bg-white/90 rounded-2xl shadow-lg p-8 grid grid-cols-1 md:grid-cols-5 gap-6 items-end border border-purple-100"
             onSubmit={handleAdd}
@@ -283,7 +270,7 @@ useEffect(() => {
               />
               <datalist id="employee-list">
                 {employees.map((emp) => (
-                  <option key={emp.id} value={emp.name} />
+                  <option key={emp._id || emp.id} value={emp.name} />
                 ))}
               </datalist>
             </div>
@@ -296,7 +283,7 @@ useEffect(() => {
               >
                 <option value="">Select Department</option>
                 {departments.map((dept) => (
-                  <option key={dept.id} value={dept.name}>
+                  <option key={dept._id || dept.id} value={dept.name}>
                     {dept.name}
                   </option>
                 ))}
@@ -356,7 +343,7 @@ useEffect(() => {
                 </thead>
                 <tbody className="bg-white divide-y divide-purple-50">
                   {filteredSalaries.map((salary) => (
-                    <tr key={salary.id} className="hover:bg-purple-50 transition">
+                    <tr key={salary._id || salary.id} className="hover:bg-purple-50 transition">
                       <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-700">{salary.name}</td>
                       <td className="px-6 py-4 whitespace-nowrap">{salary.department}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -387,7 +374,7 @@ useEffect(() => {
                         )}
                         <button
                           className="bg-gradient-to-r from-red-500 to-red-700 text-white px-4 py-1 rounded-lg shadow hover:from-red-600 hover:to-red-800 transition text-sm"
-                          onClick={() => handleDelete(salary.id)}
+                          onClick={() => handleDelete(salary._id || salary.id)}
                         >
                           Delete
                         </button>

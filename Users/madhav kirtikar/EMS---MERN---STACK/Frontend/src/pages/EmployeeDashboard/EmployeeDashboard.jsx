@@ -1,35 +1,62 @@
  import React, { useEffect, useState } from "react";
-
-// Dummy employee data (replace with backend data later)
-const DUMMY_EMPLOYEE = {
-  name: "Karan",
-  position: "Developer",
-};
-
-const DUMMY_ATTENDANCE = [
-  { date: "2024-06-01", status: "Present" },
-  { date: "2024-06-02", status: "Present" },
-  { date: "2024-06-03", status: "Absent" },
-];
-
-const DUMMY_LEAVES = [
-  { date: "2024-06-05", status: "Approved" },
-  { date: "2024-06-10", status: "Pending" },
-];
-
-const DUMMY_SALARY = [
-  { month: "June 2024", amount: 50000 },
-];
+import axios from "axios";
 
 const EmployeeDashboard = ({ user }) => {
-  // Use dummy data for now
-  const [attendance, setAttendance] = useState(DUMMY_ATTENDANCE);
-  const [leaves, setLeaves] = useState(DUMMY_LEAVES);
-  const [salary, setSalary] = useState(DUMMY_SALARY[DUMMY_SALARY.length - 1]);
+  const [employee, setEmployee] = useState(user || null);
+  const [attendance, setAttendance] = useState([]);
+  const [leaves, setLeaves] = useState([]);
+  const [salary, setSalary] = useState(null);
   const [recentActivity, setRecentActivity] = useState([]);
 
+  // Fetch employee profile, attendance, leaves, salary from backend
   useEffect(() => {
-    // Recent activity dummy logic
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const fetchAll = async () => {
+      try {
+        // Profile
+        let emp = user;
+        if (!emp) {
+          const res = await axios.get("/api/employee/me", {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          emp = res.data;
+        }
+        setEmployee(emp);
+
+        // Attendance
+        const attRes = await axios.get("/api/attendance", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setAttendance(Array.isArray(attRes.data) ? attRes.data : []);
+
+        // Leaves
+        const leaveRes = await axios.get("/api/leaves", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setLeaves(Array.isArray(leaveRes.data) ? leaveRes.data : []);
+
+        // Salary (latest)
+        const salRes = await axios.get("/api/payslips", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const payslips = Array.isArray(salRes.data) ? salRes.data : [];
+        setSalary(payslips.length ? payslips[payslips.length - 1] : null);
+      } catch {
+        // If any error, show empty data
+        setEmployee(user || null);
+        setAttendance([]);
+        setLeaves([]);
+        setSalary(null);
+      }
+    };
+    fetchAll();
+    // eslint-disable-next-line
+  }, [user]);
+
+  useEffect(() => {
+    // Recent activity logic
     const acts = [];
     if (attendance.length > 0) {
       const last = attendance[attendance.length - 1];
@@ -47,14 +74,11 @@ const EmployeeDashboard = ({ user }) => {
     }
     if (salary) {
       acts.push(
-        `Payslip downloaded for ${salary.month}`
+        `Payslip downloaded for ${salary.month || salary.date || "recent month"}`
       );
     }
     setRecentActivity(acts);
   }, [attendance, leaves, salary]);
-
-  // Use dummy employee if user prop not passed
-  const employee = user || DUMMY_EMPLOYEE;
 
   const stats = [
     {
@@ -72,11 +96,23 @@ const EmployeeDashboard = ({ user }) => {
       color: "bg-yellow-100 text-yellow-800",
     },
     {
-      label: salary ? `Salary (${salary.month})` : "Salary",
-      value: salary ? `₹${salary.amount}` : "₹0",
+      label: salary ? `Salary (${salary.month || salary.date || "Recent"})` : "Salary",
+      value: salary && salary.salary
+        ? `₹${salary.salary}`
+        : salary && salary.amount
+        ? `₹${salary.amount}`
+        : "₹0",
       color: "bg-blue-100 text-blue-800",
     },
   ];
+
+  if (!employee) {
+    return (
+      <div className="p-6 text-center text-gray-400 text-xl">
+        Loading employee data...
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
