@@ -1,197 +1,199 @@
- import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import searchIcon from '../../Assets/search-b.png';
- import Chatbot from "../../Component/CGPT/Chatbot.jsx";import axios from 'axios';
+ import React from "react";
+import { useNavigate } from "react-router-dom";
+import AdminSidebar from "../../Component/Dashboard/AdminSidebar";
+import axios from "axios";
 
-// Sirf public aur employee-relevant pages search me dikhaye, admin/sensitive info nahi
-const searchData = [
-  { name: "Home", path: "/" },
-  { name: "Login/Register", path: "/login" },
-  { name: "About Us", path: "/about" },
-  { name: "Contact Us", path: "/contacts" },
-  { name: "Leave", path: "/admin/leave" }
-  // Dashboard, Employees, Departments, Salary, Settings yahan nahi hain
-];
-
-const Navbar = () => {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
-
-  // Auth state: backend se user info fetch karega
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState(null);
-  const [userName, setUserName] = useState("");
-
+const AdminDashboard = () => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const [employees, setEmployees] = React.useState([]);
+  const [departments, setDepartments] = React.useState([]);
+  const [leaves, setLeaves] = React.useState([]);
+  const [salaries, setSalaries] = React.useState([]);
+  const [show, setShow] = React.useState(false);
 
-  // Backend se user info fetch karo (token ke basis par)
-  useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setIsLoggedIn(false);
-        setUserRole(null);
-        setUserName("");
-        return;
+  React.useEffect(() => {
+    setTimeout(() => setShow(true), 50);
+
+    // --- Backend API calls ---
+    const fetchAll = async () => {
+      try {
+        // NOTE: Replace URLs with your actual backend endpoints if different
+        const token = localStorage.getItem("token");
+        const config = token
+          ? { headers: { Authorization: `Bearer ${token}` } }
+          : {};
+
+        const [empRes, deptRes, leaveRes, salRes] = await Promise.all([
+          axios.get("/api/employees", config),
+          axios.get("/api/departments", config),
+          axios.get("/api/leaves", config),
+          axios.get("/api/salaries", config),
+        ]);
+        setEmployees(Array.isArray(empRes.data) ? empRes.data : []);
+        setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
+        setLeaves(Array.isArray(leaveRes.data) ? leaveRes.data : []);
+        setSalaries(Array.isArray(salRes.data) ? salRes.data : []);
+      } catch (err) {
+        setEmployees([]);
+        setDepartments([]);
+        setLeaves([]);
+        setSalaries([]);
       }
-      try {
-        // Try employee first
-        const empRes = await axios.get("/api/employee/me", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (empRes.data && empRes.data.name) {
-          setIsLoggedIn(true);
-          setUserRole("employee");
-          setUserName(empRes.data.name);
-          return;
-        }
-      } catch {}
-      try {
-        // Try admin
-        const adminRes = await axios.get("/api/admin/me", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (adminRes.data && adminRes.data.username) {
-          setIsLoggedIn(true);
-          setUserRole("admin");
-          setUserName(adminRes.data.username);
-          return;
-        }
-      } catch {}
-      setIsLoggedIn(false);
-      setUserRole(null);
-      setUserName("");
     };
-    fetchUser();
-  }, [location.pathname]);
+    fetchAll();
+  }, []);
 
-  const handleSearch = (e) => {
-    const value = e.target.value;
-    setQuery(value);
-    if (value.trim() === "") {
-      setResults([]);
-      setShowDropdown(false);
-      return;
-    }
-    const filtered = searchData.filter(item =>
-      item.name.toLowerCase().includes(value.toLowerCase())
-    );
-    setResults(filtered);
-    setShowDropdown(filtered.length > 0);
-  };
+  const totalEmployees = employees.length;
+  const totalDepartments = departments.length;
+  const leavesPending = leaves.filter(l => l.status === "Pending").length;
+  const salaryPaid = salaries
+    .filter(s => s.status === "Paid")
+    .reduce((acc, s) => acc + Number(s.amount), 0);
 
-  const handleSelect = (path) => {
-    setQuery("");
-    setResults([]);
-    setShowDropdown(false);
-    navigate(path);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    setIsLoggedIn(false);
-    setUserRole(null);
-    setUserName("");
-    navigate("/");
-  };
-
-  // 👇 Get display name based on role and name
-  const getDisplayName = () => {
-    if (userRole === "admin") return userName ? `Admin (${userName})` : "Admin";
-    if (userRole === "employee") return userName ? `Employee (${userName})` : "Employee";
-    return null;
-  };
+  const recentActivity = [
+    ...(employees.length > 0
+      ? [
+          {
+            type: "employee",
+            text: (
+              <>
+                👤 <b>{employees[employees.length - 1].name}</b> joined{" "}
+                {employees[employees.length - 1].department} department
+              </>
+            ),
+          },
+        ]
+      : []),
+    ...(leaves.length > 0
+      ? [
+          {
+            type: "leave",
+            text: (
+              <>
+                📝 <b>{leaves[leaves.length - 1].name || "Someone"}</b> applied for leave
+              </>
+            ),
+          },
+        ]
+      : []),
+    ...(salaryPaid > 0
+      ? [
+          {
+            type: "salary",
+            text: (
+              <>
+                💸 Salary processed for <b>{totalEmployees || 0} employees</b>
+              </>
+            ),
+          },
+        ]
+      : []),
+  ];
 
   return (
-    <nav className="flex flex-wrap items-center justify-between px-8 py-3 m-0 shadow-lg bg-gradient-to-r from-blue-500 to-purple-500">
-      <div className="flex items-center">
-        <span className="text-2xl font-extrabold tracking-widest drop-shadow-lg text-white">
-          MyKorperate
-        </span>
-      </div>
-      <ul className="flex gap-8 list-none justify-center flex-1 p-0 m-0">
-        <li>
-          <Link to="/" className="font-extrabold text-lg tracking-wide px-3 py-1 rounded transition-all duration-200 text-white hover:scale-110 hover:bg-white/20">Home</Link>
-        </li>
-        {/* 👇 Show Admin/Employee name or Login/Register */}
-        <li>
-          {!isLoggedIn ? (
-            <Link to="/login" className="font-extrabold text-lg tracking-wide px-3 py-1 rounded transition-all duration-200 text-white hover:scale-110 hover:bg-white/20">
-              Login/Register
-            </Link>
-          ) : (
-            <span className="font-extrabold text-lg tracking-wide px-3 py-1 rounded transition-all duration-200 text-yellow-200 bg-blue-900/40">
-              {getDisplayName()}
-            </span>
-          )}
-        </li>
-        <li>
-          <Link to="/about" className="font-extrabold text-lg tracking-wide px-3 py-1 rounded transition-all duration-200 text-white hover:scale-110 hover:bg-white/20">About Us</Link>
-        </li>
-        <li>
-          <Link to="/contacts" className="font-extrabold text-lg tracking-wide px-3 py-1 rounded transition-all duration-200 text-white hover:scale-110 hover:bg-white/20">Contact Us</Link>
-        </li>
-        {/* Optional: Show logout button if logged in */}
-        {isLoggedIn && (
-          <li>
-            <button
-              onClick={handleLogout}
-              className="font-extrabold text-lg tracking-wide px-3 py-1 rounded transition-all duration-200 text-white hover:scale-110 hover:bg-white/20"
-            >
-              Logout
-            </button>
-          </li>
-        )}
-      </ul>
-      <div className="mx-4 flex items-center flex-shrink-0 relative">
-        <input
-          type="text"
-          value={query}
-          onChange={handleSearch}
-          onFocus={() => setShowDropdown(results.length > 0)}
-          onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-          placeholder="Search..."
-          className="px-4 py-2 rounded-full border-none outline-none bg-white/80 text-black-700 font-semibold shadow focus:ring-2 focus:ring-purple-400 transition w-48 md:w-64 pr-10"
-          style={{ boxShadow: "0 2px 8px 0 rgba(139,92,246,0.15)" }}
-        />
-        <img
-          src={searchIcon}
-          alt="search"
-          className="absolute right-3 w-6 h-6 cursor-pointer"
-          style={{ top: '50%', transform: 'translateY(-50%)' }}
-        />
-        {showDropdown && (
-          <ul className="absolute left-0 top-12 w-full bg-white rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto border border-purple-200 animate-fadeIn">
-            {results.length === 0 && (
-              <li className="px-4 py-3 text-gray-400 text-center font-semibold tracking-wide">No results found</li>
-            )}
-            {results.map((item, idx) => (
-              <li
-                key={item.path}
-                className={`px-5 py-3 flex items-center gap-2 cursor-pointer transition-all duration-150
-                  ${idx % 2 === 0 ? "bg-purple-50" : "bg-white"}
-                  hover:bg-gradient-to-r hover:from-purple-100 hover:to-blue-100 hover:text-purple-700 font-semibold rounded`}
-                onMouseDown={() => handleSelect(item.path)}
-              >
-                <span className="inline-block w-2 h-2 rounded-full bg-purple-400 mr-2"></span>
-                <span className="tracking-wide">{item.name}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      <button
-        className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition ml-4"
-        onClick={() => setChatOpen(true)}
+    <div className="flex min-h-screen bg-gradient-to-br from-purple-200 via-blue-100 to-white">
+      <AdminSidebar />
+      <main
+        className={`flex-1 p-4 md:p-10 ml-0 md:ml-64 transform transition-transform duration-500 ${
+          show ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
+        }`}
+        style={{ willChange: "transform, opacity" }}
       >
-        Ask to C-GPT
-      </button>
-      <Chatbot open={chatOpen} setOpen={setChatOpen} />
-    </nav>
+        <div className="max-w-5xl mx-auto">
+          <h1 className="text-4xl font-extrabold mb-8 text-center tracking-wide drop-shadow-lg">
+            <span className="bg-gradient-to-r from-purple-600 via-red-400 to-blue-500 bg-clip-text text-transparent">
+              Welcome to MyKorperate
+            </span>
+          </h1>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
+            <div className="bg-gradient-to-r from-purple-400 to-blue-300 rounded-xl p-4 text-white shadow-lg flex flex-col items-center">
+              <span className="text-2xl mb-1">👥</span>
+              <div className="text-lg font-bold">{totalEmployees || 0}</div>
+              <div className="text-xs">Employees</div>
+            </div>
+            <div className="bg-gradient-to-r from-pink-400 to-purple-300 rounded-xl p-4 text-white shadow-lg flex flex-col items-center">
+              <span className="text-2xl mb-1">🏢</span>
+              <div className="text-lg font-bold">{totalDepartments || 0}</div>
+              <div className="text-xs">Departments</div>
+            </div>
+            <div className="bg-gradient-to-r from-blue-400 to-green-300 rounded-xl p-4 text-white shadow-lg flex flex-col items-center">
+              <span className="text-2xl mb-1">📝</span>
+              <div className="text-lg font-bold">{leavesPending || 0}</div>
+              <div className="text-xs">Leaves Pending</div>
+            </div>
+            <div className="bg-gradient-to-r from-yellow-400 to-pink-300 rounded-xl p-4 text-white shadow-lg flex flex-col items-center">
+              <span className="text-2xl mb-1">💸</span>
+              <div className="text-lg font-bold">₹{salaryPaid?.toLocaleString() || 0}</div>
+              <div className="text-xs">Salary Paid</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white rounded-2xl shadow-xl p-10 flex flex-col items-center hover:scale-105 transition min-h-[180px]">
+              <span className="text-5xl mb-4 text-purple-500">👥</span>
+              <h2 className="text-2xl font-bold mb-2 text-purple-700">Manage Employees</h2>
+              <p className="text-gray-600 text-center">
+                Add, edit, view, and remove employees. Organize your workforce by department and role.
+              </p>
+            </div>
+            <div className="bg-white rounded-2xl shadow-xl p-10 flex flex-col items-center hover:scale-105 transition min-h-[180px]">
+              <span className="text-5xl mb-4 text-blue-500">📊</span>
+              <h2 className="text-2xl font-bold mb-2 text-blue-700">Analytics & Reports</h2>
+              <p className="text-gray-600 text-center">
+                Get insights on employee data, department strength, and salary distribution.
+              </p>
+            </div>
+            <div className="bg-white rounded-2xl shadow-xl p-10 flex flex-col items-center hover:scale-105 transition min-h-[180px]">
+              <span className="text-5xl mb-4 text-pink-500">⚙️</span>
+              <h2 className="text-2xl font-bold mb-2 text-pink-700">Admin Tools</h2>
+              <p className="text-gray-600 text-center">
+                Secure admin panel for managing access, settings, and more.
+              </p>
+            </div>
+          </div>
+
+          {recentActivity.length > 0 && (
+            <div className="bg-white rounded-xl shadow p-8 mt-12">
+              <h3 className="text-xl font-bold mb-4 text-purple-700">Recent Activity</h3>
+              <ul className="space-y-2 text-gray-700">
+                {recentActivity.map((item, idx) => (
+                  <li key={idx}>{item.text}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="flex gap-6 mt-10 justify-center">
+            <button
+              className="bg-purple-500 text-white px-8 py-3 rounded-lg font-bold shadow hover:bg-purple-600 transition text-lg"
+              onClick={() => navigate("/admin/employees")}
+            >
+              Add Employee
+            </button>
+            <button
+              className="bg-blue-500 text-white px-8 py-3 rounded-lg font-bold shadow hover:bg-blue-600 transition text-lg"
+              onClick={() => navigate("/admin/leave")}
+            >
+              View Leaves
+            </button>
+            <button
+              className="bg-pink-500 text-white px-8 py-3 rounded-lg font-bold shadow hover:bg-pink-600 transition text-lg"
+              onClick={() => navigate("/admin/settings")}
+            >
+              Settings
+            </button>
+          </div>
+
+          <div className="mt-16 text-center">
+            <span className="text-xl text-gray-500">
+              Use the sidebar to navigate between different sections.
+            </span>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 };
 
-export default Navbar;
+export default AdminDashboard;

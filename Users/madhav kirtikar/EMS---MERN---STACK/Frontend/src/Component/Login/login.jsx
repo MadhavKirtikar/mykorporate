@@ -1,30 +1,37 @@
  import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+// import axios from 'axios'; // Backend ke liye, abhi comment kar diya
 import logicBg from "../../Assets/logic.jpg";
 
 // =====================
-// Real API Functions (backend)
+// Dummy API Functions (backend ki jagah)
 const employeeLogin = async ({ email, password }) => {
-  const res = await axios.post("/api/employee/login", { email, password });
-  return res;
+  // Dummy login: email "emp@demo.com" & password "123456"
+  if (email === "emp@demo.com" && password === "123456") {
+    return { data: { token: "dummy-emp-token" } };
+  }
+  throw new Error("Invalid employee credentials");
 };
 
 const adminLogin = async ({ username, password }) => {
-  const res = await axios.post("/api/admin/login", { username, password });
-  return res;
+  // Dummy login: username "admin" & password "admin123"
+  if (username === "admin" && password === "admin123") {
+    return { data: { token: "dummy-admin-token" } };
+  }
+  throw new Error("Invalid admin credentials");
 };
 
 const adminRegister = async ({ username, email, password }) => {
-  const res = await axios.post("/api/admin/register", { username, email, password });
-  return res;
+  // Dummy register: always success
+  return { data: { token: "dummy-admin-token" } };
 };
 // =====================
 
-// Utility: Check if admin exists (backend)
+// Utility: Check if admin exists (dummy)
 const checkAdminExists = async () => {
-  const res = await axios.get("/api/admin-exists");
-  return res.data.exists;
+  // Dummy: admin always exists after first register
+  const exists = localStorage.getItem("dummyAdminExists");
+  return !!exists;
 };
 
 const LoginRegister = () => {
@@ -150,9 +157,10 @@ const LoginRegister = () => {
       setAdminUsername(registerUsername);
       setAdminPassword(registerPassword);
       setAdminExists(true);
+      localStorage.setItem("dummyAdminExists", "true"); // Dummy admin exists flag
       navigate('/admin/dashboard');
     } catch (err) {
-      setRegisterError(err.response?.data?.message || 'Registration failed. Username or email may already exist.');
+      setRegisterError('Registration failed. Username or email may already exist.');
     }
   };
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+ import React, { useState } from "react"
 import Navbar from "./Component/Navbar/Navbar.jsx"
 import Hero from "./Component/Hero/Hero.jsx"
 import Features from "./Component/Features/features.jsx"
@@ -10,7 +10,6 @@ import Admin from "./pages/AdminDashboard/AdminDashboard.jsx"
 import AdminSettings from "./Component/Dashboard/Settings.jsx"
 import Salary from "./Component/Dashboard/Salary.jsx"
 import Leave from "./Component/Dashboard/Leave.jsx"
-import Dashboard from "./Component/Dashboard/Dashboard.jsx"
 import Department from "./Component/Dashboard/Department.jsx"
 import Employee from "./Component/Dashboard/Employee.jsx"
 import Contacts from "./Component/Contact/Contacts.jsx"
@@ -64,8 +63,7 @@ function App() {
           <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/admin/salary" element={<Salary />} />
           <Route path="/admin/leave" element={<Leave />} />
-          <Route path="/admin/dashboard" element={<Dashboard />} />
-          <Route path="/contacts" element={<Contacts />} />
+           <Route path="/contacts" element={<Contacts />} />
           <Route path="/admin/events" element={<Events />} />
           <Route path="/admin/employees" element={<Employee employees={employees} setEmployees={setEmployees} />} />
           <Route path="/admin/departments" element={<Department />} />
