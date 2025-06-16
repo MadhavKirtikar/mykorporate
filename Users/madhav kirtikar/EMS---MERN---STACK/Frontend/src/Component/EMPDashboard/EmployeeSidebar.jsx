@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+ import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 
 const USE_DUMMY = false; // true: dummy data, false: backend data
@@ -12,37 +12,37 @@ const EmployeeSidebar = ({ user }) => {
   // Use dummy user if USE_DUMMY is true
   const actualUser = USE_DUMMY ? DUMMY_USER : user;
 
+  // Get name and profile from localStorage if available, else from user prop
   const [profileImg, setProfileImg] = useState(
     localStorage.getItem("profile") ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(actualUser?.name || "Employee")}&background=8b5cf6&color=fff`
+    actualUser?.photo ||
+    ""
+  );
+  const [empName, setEmpName] = useState(
+    localStorage.getItem("name") || actualUser?.name || "Employee"
   );
 
   useEffect(() => {
-    setProfileImg(
-      localStorage.getItem("profile") ||
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(actualUser?.name || "Employee")}&background=8b5cf6&color=fff`
-    );
+    // Update profile image and name from localStorage or user prop
+    const updateSidebar = () => {
+      setProfileImg(
+        localStorage.getItem("profile") ||
+        actualUser?.photo ||
+        ""
+      );
+      setEmpName(localStorage.getItem("name") || actualUser?.name || "Employee");
+    };
+
+    updateSidebar();
 
     const onStorage = (e) => {
-      if (e.key === "profile") {
-        setProfileImg(
-          e.newValue ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(actualUser?.name || "Employee")}&background=8b5cf6&color=fff`
-        );
+      if (e.key === "profile" || e.key === "name") {
+        updateSidebar();
       }
     };
     window.addEventListener("storage", onStorage);
 
-    const interval = setInterval(() => {
-      const current = localStorage.getItem("profile");
-      setProfileImg(prev =>
-        prev !== current && current
-          ? current
-          : prev === "" && current
-          ? current
-          : prev
-      );
-    }, 500);
+    const interval = setInterval(updateSidebar, 500);
 
     return () => {
       window.removeEventListener("storage", onStorage);
@@ -52,6 +52,18 @@ const EmployeeSidebar = ({ user }) => {
   }, [actualUser?.name]);
 
   if (!actualUser) return null;
+
+  // Agar profile image nahi hai (user ne add/change nahi kiya), sidebar hi na dikhao
+  const profileValue = localStorage.getItem("profile");
+  if (
+    !profileValue ||
+    profileValue === "null" ||
+    profileValue === "undefined" ||
+    profileValue.trim() === "" ||
+    profileValue.startsWith("data:image") === false // Only show if user has uploaded an image
+  ) {
+    return null;
+  }
 
   const links = [
     { name: "Dashboard", path: "/emp", exact: true },
@@ -72,7 +84,7 @@ const EmployeeSidebar = ({ user }) => {
           alt="Profile"
           className="w-28 h-28 rounded-full bg-gradient-to-br from-cyan-300 via-blue-200 to-white border-4 border-white shadow-lg object-cover"
         />
-        <div className="mt-6 font-extrabold text-2xl text-teal-700">{actualUser?.name || "Employee"}</div>
+        <div className="mt-6 font-extrabold text-2xl text-teal-700">{empName}</div>
         <div className="text-sm text-orange-400 font-semibold tracking-widest uppercase">Employee</div>
       </div>
       <nav className="flex flex-col gap-4 px-6">

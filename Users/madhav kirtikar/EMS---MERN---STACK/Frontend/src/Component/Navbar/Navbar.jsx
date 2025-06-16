@@ -2,17 +2,15 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import searchIcon from '../../Assets/search-b.png';
 import Chatbot from '../CGPT/Chatbot.jsx';
-import axios from 'axios';
 
-// Dummy/backend toggle
-const USE_DUMMY = true; // true: dummy data, false: backend data
-
-const DUMMY_SEARCH = [
+// Sirf public aur employee-relevant pages search me dikhaye, admin/sensitive info nahi
+const searchData = [
   { name: "Home", path: "/" },
   { name: "Login/Register", path: "/login" },
   { name: "About Us", path: "/about" },
   { name: "Contact Us", path: "/contacts" },
   { name: "Leave", path: "/admin/leave" }
+  // Dashboard, Employees, Departments, Salary, Settings yahan nahi hain
 ];
 
 const Navbar = () => {
@@ -21,50 +19,25 @@ const Navbar = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
 
-  // Auth state
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState(null);
-  const [userName, setUserName] = useState("");
+  // Auth state: will work with localStorage now, and with backend later
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("role"));
+  const [userRole, setUserRole] = useState(localStorage.getItem("role") || null);
+  const [userName, setUserName] = useState(localStorage.getItem("name") || "");
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Fetch user info from backend or dummy/localStorage
+  // This effect will work with both localStorage and future backend
   useEffect(() => {
-    const fetchUser = async () => {
-      if (USE_DUMMY) {
-        const role = localStorage.getItem("role");
-        const name = localStorage.getItem("name") || "";
-        setIsLoggedIn(role === "admin" || role === "employee");
-        setUserRole(role);
-        setUserName(name);
-      } else {
-        try {
-          const token = localStorage.getItem("token");
-          if (!token) {
-            setIsLoggedIn(false);
-            setUserRole(null);
-            setUserName("");
-            return;
-          }
-          const res = await axios.get("/api/auth/me", {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          setIsLoggedIn(true);
-          setUserRole(res.data.role);
-          setUserName(res.data.name);
-        } catch {
-          setIsLoggedIn(false);
-          setUserRole(null);
-          setUserName("");
-        }
-      }
-    };
-    fetchUser();
+    // In future, you can replace this with backend user fetch
+    const role = localStorage.getItem("role");
+    const name = localStorage.getItem("name") || "";
+    setIsLoggedIn(role === "admin" || role === "employee");
+    setUserRole(role);
+    setUserName(name);
   }, [location.pathname]);
 
-  // Search data from backend or dummy
-  const handleSearch = async (e) => {
+  const handleSearch = (e) => {
     const value = e.target.value;
     setQuery(value);
     if (value.trim() === "") {
@@ -72,22 +45,11 @@ const Navbar = () => {
       setShowDropdown(false);
       return;
     }
-    if (USE_DUMMY) {
-      const filtered = DUMMY_SEARCH.filter(item =>
-        item.name.toLowerCase().includes(value.toLowerCase())
-      );
-      setResults(filtered);
-      setShowDropdown(filtered.length > 0);
-    } else {
-      try {
-        const res = await axios.get(`/api/search?q=${encodeURIComponent(value)}`);
-        setResults(res.data || []);
-        setShowDropdown((res.data || []).length > 0);
-      } catch {
-        setResults([]);
-        setShowDropdown(false);
-      }
-    }
+    const filtered = searchData.filter(item =>
+      item.name.toLowerCase().includes(value.toLowerCase())
+    );
+    setResults(filtered);
+    setShowDropdown(filtered.length > 0);
   };
 
   const handleSelect = (path) => {
@@ -97,26 +59,16 @@ const Navbar = () => {
     navigate(path);
   };
 
-  const handleLogout = async () => {
-    if (USE_DUMMY) {
-      localStorage.removeItem("role");
-      localStorage.removeItem("name");
-      setIsLoggedIn(false);
-      setUserRole(null);
-      setUserName("");
-      navigate("/");
-    } else {
-      try {
-        await axios.post("/api/auth/logout");
-      } catch {}
-      localStorage.removeItem("token");
-      setIsLoggedIn(false);
-      setUserRole(null);
-      setUserName("");
-      navigate("/");
-    }
+  const handleLogout = () => {
+    localStorage.removeItem("role");
+    localStorage.removeItem("name");
+    setIsLoggedIn(false);
+    setUserRole(null);
+    setUserName("");
+    navigate("/");
   };
 
+  // 👇 Get display name based on role and name
   const getDisplayName = () => {
     if (userRole === "admin") return userName ? `Admin (${userName})` : "Admin";
     if (userRole === "employee") return userName ? `Employee (${userName})` : "Employee";
@@ -134,16 +86,13 @@ const Navbar = () => {
         <li>
           <Link to="/" className="font-extrabold text-lg tracking-wide px-3 py-1 rounded transition-all duration-200 text-white hover:scale-110 hover:bg-white/20">Home</Link>
         </li>
+        {/* 👇 Show Admin/Employee name or Login/Register */}
         <li>
-          {!isLoggedIn ? (
+          
             <Link to="/login" className="font-extrabold text-lg tracking-wide px-3 py-1 rounded transition-all duration-200 text-white hover:scale-110 hover:bg-white/20">
               Login/Register
             </Link>
-          ) : (
-            <span className="font-extrabold text-lg tracking-wide px-3 py-1 rounded transition-all duration-200 text-yellow-200 bg-blue-900/40">
-              {getDisplayName()}
-            </span>
-          )}
+          
         </li>
         <li>
           <Link to="/about" className="font-extrabold text-lg tracking-wide px-3 py-1 rounded transition-all duration-200 text-white hover:scale-110 hover:bg-white/20">About Us</Link>
@@ -151,6 +100,7 @@ const Navbar = () => {
         <li>
           <Link to="/contacts" className="font-extrabold text-lg tracking-wide px-3 py-1 rounded transition-all duration-200 text-white hover:scale-110 hover:bg-white/20">Contact Us</Link>
         </li>
+        {/* Optional: Show logout button if logged in */}
         {isLoggedIn && (
           <li>
             <button

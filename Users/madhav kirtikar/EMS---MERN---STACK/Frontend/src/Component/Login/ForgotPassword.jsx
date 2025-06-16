@@ -1,5 +1,5 @@
  import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import loginBg from "../../Assets/Login_bg_img.jpg";
 import axios from "axios";
 
@@ -11,6 +11,7 @@ const ForgotPassword = () => {
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
   const [resetLinkSent, setResetLinkSent] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,7 +24,7 @@ const ForgotPassword = () => {
     if (USE_DUMMY) {
       // Dummy: Always success, show a fake reset link
       setResetLinkSent(true);
-      setMsg("A password reset link has been sent to your email (dummy).");
+      setMsg("A password reset link has been sent to your email.");
       return;
     }
     try {
@@ -54,7 +55,15 @@ const ForgotPassword = () => {
           <div className="w-full backdrop-filter backdrop-blur-sm rounded-3xl p-7 shadow-2xl border border-white border-opacity-50 shrink-0">
             <h2 className="text-2xl font-bold text-white text-center mb-6">Forgot Password</h2>
             {resetLinkSent ? (
-              <div className="text-green-400 text-center mb-6 font-semibold">{msg}</div>
+              <div>
+                <div className="text-green-400 text-center mb-6 font-semibold">{msg}</div>
+                <button
+                  className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 mb-2"
+                  onClick={() => navigate("/login")}
+                >
+                  Back to Login
+                </button>
+              </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="relative">
