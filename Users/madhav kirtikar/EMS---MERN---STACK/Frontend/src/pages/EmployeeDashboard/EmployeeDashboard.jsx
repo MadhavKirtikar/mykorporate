@@ -1,16 +1,41 @@
  import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const EmployeeDashboard = ({ user }) => {
+// Dummy data for fallback/testing
+const dummyEmployee = {
+  name: "John Doe",
+  position: "Software Engineer",
+  email: "john@example.com",
+  phone: "9876543210",
+};
+const dummyAttendance = [
+  { date: "2024-06-01", status: "Present" },
+  { date: "2024-06-02", status: "Absent" },
+  { date: "2024-06-03", status: "Present" },
+];
+const dummyLeaves = [
+  { date: "2024-06-05", status: "Approved" },
+  { date: "2024-06-10", status: "Pending" },
+];
+const dummySalary = { month: "June", salary: 50000 };
+
+const EmployeeDashboard = ({ user, useDummy = true }) => {
   const [employee, setEmployee] = useState(user || null);
   const [attendance, setAttendance] = useState([]);
   const [leaves, setLeaves] = useState([]);
   const [salary, setSalary] = useState(null);
   const [recentActivity, setRecentActivity] = useState([]);
 
-  // Fetch employee profile, attendance, leaves, salary from backend
+  // Fetch employee profile, attendance, leaves, salary from backend or dummy
   useEffect(() => {
     const token = localStorage.getItem("token");
+    if (useDummy) {
+      setEmployee(user || dummyEmployee);
+      setAttendance(dummyAttendance);
+      setLeaves(dummyLeaves);
+      setSalary(dummySalary);
+      return;
+    }
     if (!token) return;
 
     const fetchAll = async () => {
@@ -44,15 +69,27 @@ const EmployeeDashboard = ({ user }) => {
         const payslips = Array.isArray(salRes.data) ? salRes.data : [];
         setSalary(payslips.length ? payslips[payslips.length - 1] : null);
       } catch {
-        // If any error, show empty data
-        setEmployee(user || null);
-        setAttendance([]);
-        setLeaves([]);
-        setSalary(null);
+        // If any error, fallback to dummy if allowed
+        if (useDummy) {
+          setEmployee(user || dummyEmployee);
+          setAttendance(dummyAttendance);
+          setLeaves(dummyLeaves);
+          setSalary(dummySalary);
+        } else {
+          setEmployee(user || null);
+          setAttendance([]);
+          setLeaves([]);
+          setSalary(null);
+        }
       }
     };
     fetchAll();
     // eslint-disable-next-line
+  }, [user, useDummy]);
+
+  // Update dashboard if user prop changes (for live updates)
+  useEffect(() => {
+    if (user) setEmployee(user);
   }, [user]);
 
   useEffect(() => {
@@ -117,7 +154,10 @@ const EmployeeDashboard = ({ user }) => {
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-4">Welcome, {employee.name} 👋</h1>
-      <p className="text-gray-600 mb-8">{employee.position}</p>
+      <p className="text-gray-600 mb-2">{employee.position}</p>
+      <p className="text-gray-500 mb-8 text-sm">
+        Email: {employee.email} | Phone: {employee.phone}
+      </p>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {stats.map((item, index) => (
           <div key={index} className={`p-4 rounded-xl shadow ${item.color}`}>

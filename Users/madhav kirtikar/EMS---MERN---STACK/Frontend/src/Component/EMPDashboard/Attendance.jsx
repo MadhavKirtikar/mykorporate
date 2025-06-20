@@ -131,13 +131,16 @@ const Attendance = () => {
   };
 
   return (
-    <div className=" ">
-      {/* Title same style as Settings/Calendar/Notifications/Leaves */}
+    <div className="max-w-4xl mx-auto px-2 py-8">
+      {/* Title */}
       <h2 className="text-4xl font-extrabold text-center tracking-wide mb-10">
-        <span className="bg-gradient-to-r from-purple-500 via-blue-400 to-pink-400 bg-clip-text text-transparent drop-shadow">
+        <span className="bg-gradient-to-r from-purple-600 via-blue-500 to-pink-400 bg-clip-text text-transparent drop-shadow">
+          <span role=" " aria-label="calendar" className="mr-2"></span>
           Attendance
         </span>
       </h2>
+
+      {/* Actions */}
       <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
         <div className="flex-1 flex flex-wrap gap-2 md:justify-end">
           <button
@@ -157,20 +160,20 @@ const Attendance = () => {
 
       {/* Present/Absent Count */}
       <div className="flex flex-wrap gap-4 justify-end mb-4 text-base font-semibold">
-        <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full shadow-sm">
-          Present: {presentCount}
+        <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
+          <span className="text-lg">✔️</span> Present: {presentCount}
         </span>
-        <span className="bg-red-50 text-red-700 px-3 py-1 rounded-full shadow-sm">
-          Absent: {absentCount}
+        <span className="bg-red-50 text-red-700 px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
+          <span className="text-lg">❌</span> Absent: {absentCount}
         </span>
-        <span className="bg-gray-50 text-gray-500 px-3 py-1 rounded-full shadow-sm">
-          Total: {totalDays}
+        <span className="bg-gray-50 text-gray-500 px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
+          <span className="text-lg">📆</span> Total: {totalDays}
         </span>
       </div>
 
-      {/* Extra: Stats */}
+      {/* Stats */}
       {showStats && (
-        <div className="mb-6 p-4 rounded-2xl bg-purple-50 border border-purple-100 flex flex-wrap gap-8 justify-between text-base font-medium shadow">
+        <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-purple-50 via-blue-50 to-pink-50 border border-purple-100 flex flex-wrap gap-8 justify-between text-base font-medium shadow">
           <div>
             <span className="font-bold text-purple-700">Present %:</span> {presentPercent}%
           </div>
@@ -190,7 +193,7 @@ const Attendance = () => {
             key={type}
             className={`px-4 py-1 rounded-full text-sm font-bold border ${
               filter === type
-                ? "bg-purple-600 text-white border-purple-600 shadow"
+                ? "bg-gradient-to-r from-purple-600 to-blue-500 text-white border-purple-600 shadow"
                 : "bg-purple-50 text-purple-700 border-purple-200"
             } transition`}
             onClick={() => setFilter(type)}
@@ -207,6 +210,7 @@ const Attendance = () => {
         />
       </div>
 
+      {/* Attendance Table */}
       {loading ? (
         <div className="text-gray-500 text-center py-12 text-lg font-semibold animate-pulse">
           Loading attendance...
@@ -232,14 +236,20 @@ const Attendance = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-purple-50">
-              {filteredAttendance.map((att) => (
-                <tr key={att.id || att._id} className="hover:bg-purple-50 transition">
-                  <td className="px-4 py-2 font-medium">
-                    {new Date(att.date).toLocaleDateString("en-IN", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}
+              {filteredAttendance.map((att, idx) => (
+                <tr
+                  key={att.id || att._id || idx}
+                  className={`hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition`}
+                >
+                  <td className="px-4 py-2 font-medium whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1">
+                      <span className="text-purple-400">📅</span>
+                      {new Date(att.date).toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
                   </td>
                   <td className="px-4 py-2 text-center">
                     <span
@@ -252,9 +262,25 @@ const Attendance = () => {
                       {att.status === "Present" ? "✔️" : "❌"} {att.status}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-center">{att.checkIn || "-"}</td>
-                  <td className="px-4 py-2 text-center">{att.checkOut || "-"}</td>
-                  <td className="px-4 py-2">{att.note || <span className="text-gray-300">-</span>}</td>
+                  <td className="px-4 py-2 text-center">
+                    <span className="inline-block bg-blue-50 text-blue-700 rounded px-2 py-0.5 font-mono text-xs">
+                      {att.checkIn || "-"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <span className="inline-block bg-blue-50 text-blue-700 rounded px-2 py-0.5 font-mono text-xs">
+                      {att.checkOut || "-"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2">
+                    {att.note ? (
+                      <span className="inline-block bg-purple-50 text-purple-700 rounded px-2 py-0.5 text-xs">
+                        {att.note}
+                      </span>
+                    ) : (
+                      <span className="text-gray-300">-</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -262,6 +288,7 @@ const Attendance = () => {
         </div>
       )}
       <div className="text-xs text-gray-400 mt-6 text-center">
+        {/* You can add a footer note or copyright here */}
       </div>
     </div>
   );

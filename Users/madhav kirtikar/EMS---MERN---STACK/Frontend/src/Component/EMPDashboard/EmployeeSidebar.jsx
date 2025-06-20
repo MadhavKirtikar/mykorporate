@@ -85,6 +85,7 @@ const EmployeeSidebar = ({ user }) => {
           className="w-28 h-28 rounded-full bg-gradient-to-br from-cyan-300 via-blue-200 to-white border-4 border-white shadow-lg object-cover"
         />
         <div className="mt-6 font-extrabold text-2xl text-teal-700">{empName}</div>
+       
         <div className="text-sm text-orange-400 font-semibold tracking-widest uppercase">Employee</div>
       </div>
       <nav className="flex flex-col gap-4 px-6">

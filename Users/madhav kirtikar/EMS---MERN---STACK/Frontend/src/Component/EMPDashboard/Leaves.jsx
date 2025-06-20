@@ -90,7 +90,7 @@ const Leaves = ({ user }) => {
         ]);
         setForm({ date: "", endDate: "", type: "", reason: "" });
         setShowForm(false);
-        setMessage("Leave request sent to admin! (Dummy)");
+        setMessage("Leave request sent to admin!");
         setTimeout(() => setMessage(""), 2500);
         return;
       }

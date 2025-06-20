@@ -1,13 +1,13 @@
- 
-import React, { useState, useEffect } from "react";
+ import React, { useState, useEffect } from "react";
 import AdminSidebar from "./AdminSidebar";
 import axios from "axios";
 
-const USE_DUMMY = true; // true: dummy data, false: backend data
+const USE_DUMMY = true;
 
 const defaultProfile = "https://ui-avatars.com/api/?background=8b5cf6&color=fff&name=EMP";
 
 const emptyForm = {
+  Id: "",
   name: "",
   department: "",
   position: "",
@@ -30,6 +30,7 @@ const DUMMY_DEPARTMENTS = [
 const DUMMY_EMPLOYEES = [
   {
     id: 1,
+    empId: "EMP001",
     name: "Amit",
     department: "HR",
     position: "Manager",
@@ -45,6 +46,7 @@ const DUMMY_EMPLOYEES = [
   },
   {
     id: 2,
+    empId: "EMP002",
     name: "Priya",
     department: "IT",
     position: "Developer",
@@ -60,6 +62,7 @@ const DUMMY_EMPLOYEES = [
   },
   {
     id: 3,
+    empId: "EMP003",
     name: "Ravi",
     department: "Finance",
     position: "Accountant",
@@ -74,6 +77,16 @@ const DUMMY_EMPLOYEES = [
     performance: 3.9,
   },
 ];
+
+function generateEmpId(employees) {
+  // Find max empId number and increment
+  let max = 0;
+  employees.forEach(emp => {
+    const num = parseInt((emp.empId || "").replace(/\D/g, ""), 10);
+    if (!isNaN(num) && num > max) max = num;
+  });
+  return `EMP${String(max + 1).padStart(3, "0")}`;
+}
 
 const Employee = () => {
   const [departmentsList, setDepartmentsList] = useState([]);
@@ -140,7 +153,8 @@ const Employee = () => {
       (!selectedDept || emp.department === selectedDept.name) &&
       (
         emp.name?.toLowerCase().includes(search.toLowerCase()) ||
-        emp.position?.toLowerCase().includes(search.toLowerCase())
+        emp.position?.toLowerCase().includes(search.toLowerCase()) ||
+        emp.empId?.toLowerCase().includes(search.toLowerCase())
       )
   );
 
@@ -168,9 +182,11 @@ const Employee = () => {
       setAddError("Valid age (18-70) is required.");
       return;
     }
+    const empId = generateEmpId(employees);
     if (USE_DUMMY) {
       const newEmp = {
         ...form,
+        empId,
         id: Date.now(),
         performance: 0,
       };
@@ -183,7 +199,7 @@ const Employee = () => {
       return;
     }
     try {
-      await axios.post("/api/employees", { ...form, performance: 0 });
+      await axios.post("/api/employees", { ...form, empId, performance: 0 });
       setSuccessMsg("Employee added successfully!");
       setForm(emptyForm);
       setShowAddForm(false);
@@ -231,7 +247,7 @@ const Employee = () => {
       setEmployees(
         employees.map((emp) =>
           emp.id === selectedEmp.id
-            ? { ...form, id: emp.id, performance: editPerformance }
+            ? { ...form, id: emp.id, empId: emp.empId, performance: editPerformance }
             : emp
         )
       );
@@ -246,7 +262,7 @@ const Employee = () => {
       return;
     }
     try {
-      await axios.put(`/api/employees/${selectedEmp.id}`, { ...form, performance: editPerformance });
+      await axios.put(`/api/employees/${selectedEmp.id}`, { ...form, empId: selectedEmp.empId, performance: editPerformance });
       setSuccessMsg("Employee updated successfully!");
       setForm(emptyForm);
       setShowAddForm(false);
@@ -322,8 +338,8 @@ const Employee = () => {
         style={{ willChange: "transform, opacity" }}
       >
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-extrabold mb-6 text-center tracking-wide drop-shadow-lg flex items-center justify-center gap-3">
-            <span className="bg-gradient-to-r from-purple-600 via-red-500 to-blue-500 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-extrabold mb-6 text-center tracking-wide drop-shadow-lg flex items-center justify-center gap-3">
+            <span className="bg-gradient-to-r from-purple-600 via-red-400 to-blue-500 bg-clip-text text-transparent">
               Employee Management
             </span>
           </h1>
@@ -351,7 +367,36 @@ const Employee = () => {
                   </h2>
                   <table className="w-full mb-4">
                     <tbody>
-                      
+                      {!editMode && (
+                        <tr>
+                          <td className="pr-2 py-2 font-semibold text-gray-700">Employee ID</td>
+                          <td>
+                            <input
+                              type="text"
+                              name="empId"
+                              value={generateEmpId(employees)}
+                              className="border rounded px-3 py-2 w-full bg-gray-100 text-gray-500"
+                              disabled
+                              readOnly
+                            />
+                          </td>
+                        </tr>
+                      )}
+                      {editMode && (
+                        <tr>
+                          <td className="pr-2 py-2 font-semibold text-gray-700">Employee ID</td>
+                          <td>
+                            <input
+                              type="text"
+                              name="empId"
+                              value={form.empId}
+                              className="border rounded px-3 py-2 w-full bg-gray-100 text-gray-500"
+                              disabled
+                              readOnly
+                            />
+                          </td>
+                        </tr>
+                      )}
                       <tr>
                         <td className="pr-2 py-2 font-semibold text-gray-700">Name</td>
                         <td>
@@ -540,8 +585,7 @@ const Employee = () => {
                         </td>
                       </tr>
                       <tr>
-                        <td className="pr-2 py-2 font-semibold text-gray-700">Photo URL</td>
-                        <td>
+                         <td>
                           <input
                             type="text"
                             name="photo"
@@ -605,7 +649,7 @@ const Employee = () => {
               </span>
               <input
                 type="text"
-                placeholder="Search by name or position..."
+                placeholder="Search by name, emp id or position..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-12 pr-10 py-2 rounded-full border border-purple-200 focus:border-purple-500 outline-none text-base w-full shadow"
@@ -654,6 +698,7 @@ const Employee = () => {
                 <table className="min-w-full divide-y divide-purple-100">
                   <thead>
                     <tr>
+                      <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 uppercase">Emp ID</th>
                       <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 uppercase">Name</th>
                       <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 uppercase">Department</th>
                       <th className="px-4 py-2 text-center text-xs font-bold text-purple-700 uppercase">Status</th>
@@ -662,7 +707,7 @@ const Employee = () => {
                   <tbody className="bg-white divide-y divide-purple-50">
                     {employees.length === 0 ? (
                       <tr>
-                        <td colSpan={3} className="text-center text-gray-400 py-6">
+                        <td colSpan={4} className="text-center text-gray-400 py-6">
                           <span className="flex flex-col items-center gap-2">
                             <span className="animate-bounce flex justify-center">
                               <svg width="38" height="38" viewBox="0 0 24 24" fill="none">
@@ -678,6 +723,7 @@ const Employee = () => {
                     ) : (
                       employees.map((emp) => (
                         <tr key={emp.id}>
+                          <td className="px-4 py-2 font-semibold text-gray-700">{emp.empId}</td>
                           <td className="px-4 py-2 font-semibold text-gray-700">{toUpper(emp.name)}</td>
                           <td className="px-4 py-2">{emp.department}</td>
                           <td className="px-4 py-2 text-center">
@@ -791,6 +837,9 @@ const Employee = () => {
                           <thead>
                             <tr>
                               <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 uppercase">
+                                Emp ID
+                              </th>
+                              <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 uppercase">
                                 Name
                               </th>
                               <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 uppercase">
@@ -810,6 +859,7 @@ const Employee = () => {
                                 key={emp.id}
                                 className="hover:bg-purple-50 transition"
                               >
+                                <td className="px-4 py-2 font-semibold text-blue-700">{emp.empId}</td>
                                 <td className="px-4 py-2 font-semibold text-gray-700">
                                   {toUpper(emp.name)}
                                 </td>
@@ -873,6 +923,9 @@ const Employee = () => {
                         <thead>
                           <tr>
                             <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 uppercase">
+                              Emp ID
+                            </th>
+                            <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 uppercase">
                               Name
                             </th>
                             <th className="px-4 py-2 text-left text-xs font-bold text-purple-700 uppercase">
@@ -892,6 +945,7 @@ const Employee = () => {
                               key={emp.id}
                               className="hover:bg-purple-50 transition"
                             >
+                              <td className="px-4 py-2 font-semibold text-blue-700">{emp.empId}</td>
                               <td className="px-4 py-2 font-semibold text-gray-700">
                                 {toUpper(emp.name)}
                               </td>
@@ -958,6 +1012,9 @@ const Employee = () => {
                   {toUpper(viewEmp.position)}
                 </h3>
                 <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-lg">
+                  <div>
+                    <span className="font-semibold text-gray-600">Emp ID:</span> {viewEmp.empId}
+                  </div>
                   <div>
                     <span className="font-semibold text-gray-600">Department:</span> {viewEmp.department}
                   </div>

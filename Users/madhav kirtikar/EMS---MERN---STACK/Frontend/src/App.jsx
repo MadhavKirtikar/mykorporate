@@ -1,4 +1,5 @@
- import React, { useState } from "react"
+ import React, { useEffect, useState } from "react"
+import SplashScreen from "./Component/IntroAnimation/SplashScreen.jsx"
 import Navbar from "./Component/Navbar/Navbar.jsx"
 import Hero from "./Component/Hero/Hero.jsx"
 import Features from "./Component/Features/features.jsx"
@@ -27,7 +28,6 @@ import Chatbot from "./Component/CGPT/Chatbot.jsx";
 import Settings from "./Component/EMPDashboard/Settings.jsx";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom"
 
-// Profile state ko yahan define karo taki sab jagah same profile dikhe
 const defaultProfile = {
   name: "Amit Kumar",
   email: "amit@demo.com",
@@ -39,10 +39,10 @@ const defaultProfile = {
   photo: "",
 };
 
-function App() {
-  const [employees, setEmployees] = useState([])
-  const [profile, setProfile] = useState(defaultProfile)
-  const user = { name: profile.name, position: profile.position }
+function MainApp() {
+  const [employees, setEmployees] = useState([]);
+  const [profile, setProfile] = useState(defaultProfile);
+  const user = { name: profile.name, position: profile.position };
 
   return (
     <Router>
@@ -59,11 +59,12 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/admin/salary" element={<Salary />} />
           <Route path="/admin/leave" element={<Leave />} />
-           <Route path="/contacts" element={<Contacts />} />
+          <Route path="/contacts" element={<Contacts />} />
           <Route path="/admin/events" element={<Events />} />
           <Route path="/admin/employees" element={<Employee employees={employees} setEmployees={setEmployees} />} />
           <Route path="/admin/departments" element={<Department />} />
@@ -136,7 +137,18 @@ function App() {
         </Routes>
       </div>
     </Router>
-  )
+  );
 }
 
-export default App
+function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSplash(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return showSplash ? <SplashScreen /> : <MainApp />;
+}
+
+export default App;

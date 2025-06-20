@@ -12,18 +12,23 @@ const DUMMY_USER = {
   password: "",
   confirmPassword: "",
   profile: "",
+  dob: "1998-01-01",
+  gender: "Male",
+  address: "Mumbai, India",
 };
 
 const Settings = () => {
   const [user, setUser] = useState({
     name: "",
     email: "",
-    phone: "",
-    department: "",
+    phone: "", 
     notifications: true,
     password: "",
     confirmPassword: "",
     profile: localStorage.getItem("profile") || "",
+    dob: "",
+    gender: "",
+    address: "",
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -38,6 +43,7 @@ const Settings = () => {
         setUser({ ...DUMMY_USER, password: "", confirmPassword: "" });
         setProfilePreview(DUMMY_USER.profile || "");
         if (DUMMY_USER.profile) localStorage.setItem("profile", DUMMY_USER.profile);
+        localStorage.setItem("name", DUMMY_USER.name); // sync name for sidebar
         return;
       }
       try {
@@ -48,11 +54,13 @@ const Settings = () => {
         setUser({ ...res.data, password: "", confirmPassword: "" });
         setProfilePreview(res.data.profile || "");
         if (res.data.profile) localStorage.setItem("profile", res.data.profile);
+        if (res.data.name) localStorage.setItem("name", res.data.name);
       } catch {
         setMessage("Failed to load user data.");
       }
     };
     fetchUser();
+    // eslint-disable-next-line
   }, []);
 
   // Handle input changes
@@ -62,6 +70,10 @@ const Settings = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+    // Sync name to localStorage for sidebar
+    if (name === "name") {
+      localStorage.setItem("name", value);
+    }
   };
 
   // Handle profile image change
@@ -90,12 +102,17 @@ const Settings = () => {
       setMessage("Passwords do not match!");
       return;
     }
+    // Sync name and profile to localStorage for sidebar
     if (user.profile) {
-      localStorage.setItem("profile", user.profile); // Sidebar sync
+      localStorage.setItem("profile", user.profile);
+    }
+    if (user.name) {
+      localStorage.setItem("name", user.name);
     }
     if (USE_DUMMY) {
       setMessage("Settings saved! (Dummy)");
       setLoading(false);
+      setTimeout(() => setMessage(""), 3000);
       return;
     }
     try {
@@ -105,164 +122,213 @@ const Settings = () => {
       });
       setMessage("Settings saved!");
       if (user.profile) localStorage.setItem("profile", user.profile);
+      if (user.name) localStorage.setItem("name", user.name);
     } catch {
       setMessage("Failed to save settings.");
     }
     setLoading(false);
+    setTimeout(() => setMessage(""), 3000);
   };
 
   // Toggle password visibility
   const toggleShowPassword = () => setShowPassword((s) => !s);
 
   return (
-    <div>
-      <h2 className="text-4xl font-extrabold text-center tracking-wide mb-10">
-        <span className="bg-gradient-to-r from-purple-500 via-blue-400 to-pink-400 bg-clip-text text-transparent drop-shadow">
-          My Settings
+    <div className="flex flex-col items-center justify-center min-h-[80vh]">
+      {/* Profile Picture on Top Center */}
+      <div className="flex flex-col items-center mb-2">
+        <div className="relative group">
+          <img
+            src={
+              profilePreview ||
+              "https://ui-avatars.com/api/?name=" +
+                encodeURIComponent(user.name || "User") +
+                "&background=8b5cf6&color=fff"
+            }
+            alt="Profile"
+            className="w-24 h-24 rounded-full border-2 border-purple-300 shadow object-cover bg-white"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current.click()}
+            className="absolute bottom-1 right-1 bg-purple-600 text-white rounded-full p-1 shadow hover:bg-purple-700 transition opacity-90 group-hover:opacity-100"
+            title={profilePreview ? "Change Profile" : "Add Profile"}
+            tabIndex={-1}
+            style={{ fontSize: 12 }}
+          >
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+              <path
+                d="M12 16.5A4.5 4.5 0 1 0 12 7.5a4.5 4.5 0 0 0 0 9Zm7.5-4.5a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0ZM12 3v2M12 19v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            onChange={handleProfileChange}
+            className="hidden"
+          />
+        </div>
+        <span className="text-purple-700 font-semibold text-xs mt-1">
+          {profilePreview ? "Change Photo" : "Add Photo"}
         </span>
+      </div>
+      <h2 className="text-2xl font-extrabold text-center tracking-wide mb-3 text-purple-700">
+        My Settings
       </h2>
       <form
         onSubmit={handleSave}
-        className="space-y-8 rounded-3xl shadow-2xl p-12 border border-purple-100"
-        style={{ background: "none" }}
+        className="rounded-xl shadow-lg p-6 w-full max-w-2xl border border-purple-100 bg-white/90 backdrop-blur-md"
+        style={{ background: "rgba(255,255,255,0.97)" }}
       >
-        {/* Profile Picture */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="relative group">
-            <img
-              src={
-                profilePreview ||
-                "https://ui-avatars.com/api/?name=" +
-                  encodeURIComponent(user.name || "User") +
-                  "&background=8b5cf6&color=fff"
-              }
-              alt="Profile"
-              className="w-28 h-28 rounded-full border-4 border-purple-200 shadow-lg object-cover bg-white"
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current.click()}
-              className="absolute bottom-2 right-2 bg-purple-600 text-white rounded-full p-2 shadow-lg hover:bg-purple-700 transition opacity-90 group-hover:opacity-100"
-              title={profilePreview ? "Change Profile" : "Add Profile"}
-              tabIndex={-1}
-            >
-              <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-                <path
-                  d="M12 16.5A4.5 4.5 0 1 0 12 7.5a4.5 4.5 0 0 0 0 9Zm7.5-4.5a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0ZM12 3v2M12 19v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+        <table className="w-full text-left border-separate border-spacing-y-2">
+          <tbody>
+            {/* Name */}
+            <tr>
+              <td className="font-bold text-purple-700 w-32">Name</td>
+              <td>
+                <input
+                  type="text"
+                  name="name"
+                  value={user.name}
+                  onChange={handleChange}
+                  className="w-full border border-purple-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-300 text-base"
                 />
-              </svg>
-            </button>
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              onChange={handleProfileChange}
-              className="hidden"
-            />
-          </div>
-          <span className="text-purple-700 font-semibold text-base">
-            {profilePreview ? "Change Profile Photo" : "Add Profile Photo"}
-          </span>
-        </div>
-        {/* Name */}
-        <div>
-          <label className="block text-base font-bold text-purple-700 mb-1">Name</label>
-          <input
-            type="text"
-            name="name"
-            value={user.name}
-            onChange={handleChange}
-            className="w-full border-2 border-purple-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300 text-lg"
-          />
-        </div>
-        {/* Email */}
-        <div>
-          <label className="block text-base font-bold text-purple-700 mb-1">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={user.email}
-            onChange={handleChange}
-            className="w-full border-2 border-purple-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300 text-lg"
-          />
-        </div>
-        {/* Phone */}
-        <div>
-          <label className="block text-base font-bold text-purple-700 mb-1">Phone</label>
-          <input
-            type="text"
-            name="phone"
-            value={user.phone}
-            onChange={handleChange}
-            className="w-full border-2 border-purple-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300 text-lg"
-          />
-        </div>
-        {/* Department */}
-        <div>
-          <label className="block text-base font-bold text-purple-700 mb-1">Department</label>
-          <input
-            type="text"
-            name="department"
-            value={user.department}
-            onChange={handleChange}
-            className="w-full border-2 border-purple-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300 text-lg"
-          />
-        </div>
-        {/* Notifications */}
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            name="notifications"
-            checked={user.notifications}
-            onChange={handleChange}
-            id="notifications"
-            className="accent-purple-600 w-5 h-5"
-          />
-          <label htmlFor="notifications" className="text-purple-700 font-bold text-base">
-            Enable Notifications
-          </label>
-        </div>
-        {/* Change Password */}
-        <div>
-          <label className="block text-base font-bold text-purple-700 mb-1">Change Password</label>
-          <div className="flex gap-3">
-            <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              value={user.password}
-              onChange={handleChange}
-              placeholder="New Password"
-              className="w-full border-2 border-purple-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300 text-lg"
-              autoComplete="new-password"
-            />
-            <input
-              type={showPassword ? "text" : "password"}
-              name="confirmPassword"
-              value={user.confirmPassword}
-              onChange={handleChange}
-              placeholder="Confirm Password"
-              className="w-full border-2 border-purple-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300 text-lg"
-              autoComplete="new-password"
-            />
-            <button
-              type="button"
-              onClick={toggleShowPassword}
-              className="px-4 py-2 rounded-xl bg-purple-100 text-purple-700 font-bold hover:bg-purple-200 transition"
-              tabIndex={-1}
-            >
-              {showPassword ? "Hide" : "Show"}
-            </button>
-          </div>
-        </div>
+              </td>
+            </tr>
+            {/* Email */}
+            <tr>
+              <td className="font-bold text-purple-700">Email</td>
+              <td>
+                <input
+                  type="email"
+                  name="email"
+                  value={user.email}
+                  onChange={handleChange}
+                  className="w-full border border-purple-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-300 text-base"
+                />
+              </td>
+            </tr>
+            {/* Phone */}
+            <tr>
+              <td className="font-bold text-purple-700">Phone</td>
+              <td>
+                <input
+                  type="text"
+                  name="phone"
+                  value={user.phone}
+                  onChange={handleChange}
+                  className="w-full border border-purple-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-300 text-base"
+                />
+              </td>
+            </tr>
+            
+            {/* Date of Birth */}
+            <tr>
+              <td className="font-bold text-purple-700">DOB</td>
+              <td>
+                <input
+                  type="date"
+                  name="dob"
+                  value={user.dob}
+                  onChange={handleChange}
+                  className="w-full border border-purple-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-300 text-base"
+                />
+              </td>
+            </tr>
+            {/* Gender */}
+            <tr>
+              <td className="font-bold text-purple-700">Gender</td>
+              <td>
+                <select
+                  name="gender"
+                  value={user.gender}
+                  onChange={handleChange}
+                  className="w-full border border-purple-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-300 text-base"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </td>
+            </tr>
+            {/* Address */}
+            <tr>
+              <td className="font-bold text-purple-700">Address</td>
+              <td>
+                <input
+                  type="text"
+                  name="address"
+                  value={user.address}
+                  onChange={handleChange}
+                  className="w-full border border-purple-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-300 text-base"
+                />
+              </td>
+            </tr>
+            {/* Notifications */}
+            <tr>
+              <td className="font-bold text-purple-700">Notifications</td>
+              <td>
+                <input
+                  type="checkbox"
+                  name="notifications"
+                  checked={user.notifications}
+                  onChange={handleChange}
+                  id="notifications"
+                  className="accent-purple-600 w-4 h-4"
+                />
+                <label htmlFor="notifications" className="ml-2 text-purple-700 font-bold text-sm">
+                  Enable Notifications
+                </label>
+              </td>
+            </tr>
+            {/* Change Password */}
+            <tr>
+              <td className="font-bold text-purple-700 align-top">Password</td>
+              <td>
+                <div className="flex gap-2">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={user.password}
+                    onChange={handleChange}
+                    placeholder="New Password"
+                    className="w-full border border-purple-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-300 text-base"
+                    autoComplete="new-password"
+                  />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    value={user.confirmPassword}
+                    onChange={handleChange}
+                    placeholder="Confirm Password"
+                    className="w-full border border-purple-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-300 text-base"
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={toggleShowPassword}
+                    className="px-2 py-1 rounded bg-purple-100 text-purple-700 font-bold hover:bg-purple-200 transition text-xs"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
         {/* Save Button */}
         <button
           type="submit"
           disabled={loading}
-          className={`bg-gradient-to-r from-purple-600 to-blue-500 text-white px-8 py-3 rounded-xl font-bold text-lg hover:from-purple-700 hover:to-blue-600 transition w-full shadow ${
+          className={`mt-4 bg-gradient-to-r from-purple-600 to-blue-500 text-white px-6 py-2 rounded-lg font-bold text-base hover:from-purple-700 hover:to-blue-600 transition w-full shadow ${
             loading ? "opacity-60 cursor-not-allowed" : ""
           }`}
         >
@@ -271,7 +337,7 @@ const Settings = () => {
         {/* Message */}
         {message && (
           <div
-            className={`text-center mt-2 font-semibold ${
+            className={`text-center mt-3 font-semibold ${
               message.includes("not match") ? "text-red-600" : "text-green-600"
             }`}
           >
@@ -279,7 +345,10 @@ const Settings = () => {
           </div>
         )}
       </form>
-      <div className="text-xs text-gray-400 mt-8 text-center"></div>
+      <div className="text-xs text-blue-800 mt-2 text-center">
+        Tip: Update your profile photo, info, and password here.<br />
+        All changes reflect instantly in your sidebar and profile.
+      </div>
     </div>
   );
 };
