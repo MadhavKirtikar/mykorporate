@@ -1,4 +1,4 @@
-package com.example.ems.dto;
+ package com.example.ems.dto;
 
 public class LeaveDTO {
     private Long id;
@@ -9,18 +9,38 @@ public class LeaveDTO {
     private String reason;
     private String status;
 
+    public LeaveDTO() {
+        // Default constructor
+    }
+
+    public LeaveDTO(Long id, String name, String department, String fromDate, String toDate, String reason, String status) {
+        this.id = id;
+        this.name = name;
+        this.department = department;
+        this.fromDate = fromDate;
+        this.toDate = toDate;
+        this.reason = reason;
+        this.status = status;
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
     public String getDepartment() { return department; }
     public void setDepartment(String department) { this.department = department; }
+
     public String getFromDate() { return fromDate; }
     public void setFromDate(String fromDate) { this.fromDate = fromDate; }
+
     public String getToDate() { return toDate; }
     public void setToDate(String toDate) { this.toDate = toDate; }
+
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }
+
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 }

@@ -1,6 +1,10 @@
-package com.example.ems.repository;
+ package com.example.ems.repository;
 
 import com.example.ems.model.Salary;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface SalaryRepository extends JpaRepository<Salary, Long> {}
+import java.util.List;
+
+public interface SalaryRepository extends JpaRepository<Salary, Long> {
+    List<Salary> findByEmployeeName(String employeeName);
+}

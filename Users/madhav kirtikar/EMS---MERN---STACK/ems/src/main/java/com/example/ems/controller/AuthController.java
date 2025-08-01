@@ -1,4 +1,4 @@
-package com.example.ems.controller;
+ package com.example.ems.controller;
 
 import com.example.ems.model.User;
 import com.example.ems.repository.UserRepository;
@@ -18,8 +18,20 @@ public class AuthController {
 
     @PostMapping("/register")
     public String register(@RequestBody User user) {
+        if (userRepository.findByUsername(user.getUsername()) != null) {
+            return "Username already exists";
+        }
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        // Default role if not provided
+        if (user.getRole() == null || user.getRole().isEmpty()) {
+            user.setRole("ROLE_EMPLOYEE");
+        } else if (!user.getRole().startsWith("ROLE_")) {
+            user.setRole("ROLE_" + user.getRole().toUpperCase());
+        }
+
         userRepository.save(user);
-        return "User registered";
+        return "User registered successfully";
     }
 }

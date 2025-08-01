@@ -1,4 +1,4 @@
-package com.example.ems.config;
+ package com.example.ems.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,7 +14,7 @@ public class WebConfig {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:5173")
+                        .allowedOrigins("http://localhost:5173") // 👈 तुम्हारा React app का URL
                         .allowedMethods("*")
                         .allowedHeaders("*");
             }

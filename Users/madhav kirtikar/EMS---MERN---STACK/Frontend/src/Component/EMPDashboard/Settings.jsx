@@ -1,7 +1,9 @@
  import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-const USE_DUMMY = false; // true: dummy data, false: backend data
+
+const USE_DUMMY = true; // true: dummy data, false: backend data
 
 const DUMMY_USER = {
   name: "Employee Name",
@@ -110,7 +112,7 @@ const Settings = () => {
       localStorage.setItem("name", user.name);
     }
     if (USE_DUMMY) {
-      setMessage("Settings saved! (Dummy)");
+      setMessage("Settings saved!");
       setLoading(false);
       setTimeout(() => setMessage(""), 3000);
       return;
@@ -132,225 +134,205 @@ const Settings = () => {
 
   // Toggle password visibility
   const toggleShowPassword = () => setShowPassword((s) => !s);
+  const navigate = useNavigate();
+
+const handleLogout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("role");
+  localStorage.removeItem("profile");
+  localStorage.removeItem("name");
+  localStorage.removeItem("empRememberData");
+  navigate("/login");
+};
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh]">
-      {/* Profile Picture on Top Center */}
-      <div className="flex flex-col items-center mb-2">
-        <div className="relative group">
+  <div className="flex flex-col items-center justify-center min-h-[90vh] px-4 py-8">
+    {/* Profile Picture */}
+    <div className="flex flex-col items-center mb-4">
+      <div className="relative group">
+        {profilePreview && profilePreview.startsWith("data:image") ? (
           <img
-            src={
-              profilePreview ||
-              "https://ui-avatars.com/api/?name=" +
-                encodeURIComponent(user.name || "User") +
-                "&background=8b5cf6&color=fff"
-            }
+            src={profilePreview}
             alt="Profile"
-            className="w-24 h-24 rounded-full border-2 border-purple-300 shadow object-cover bg-white"
+            className="w-24 h-24 rounded-full border-4 border-purple-300 shadow-md object-cover bg-white transition duration-300 hover:scale-105"
           />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current.click()}
-            className="absolute bottom-1 right-1 bg-purple-600 text-white rounded-full p-1 shadow hover:bg-purple-700 transition opacity-90 group-hover:opacity-100"
-            title={profilePreview ? "Change Profile" : "Add Profile"}
-            tabIndex={-1}
-            style={{ fontSize: 12 }}
-          >
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
-              <path
-                d="M12 16.5A4.5 4.5 0 1 0 12 7.5a4.5 4.5 0 0 0 0 9Zm7.5-4.5a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0ZM12 3v2M12 19v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            onChange={handleProfileChange}
-            className="hidden"
-          />
-        </div>
-        <span className="text-purple-700 font-semibold text-xs mt-1">
-          {profilePreview ? "Change Photo" : "Add Photo"}
-        </span>
+        ) : (
+          <div className="w-24 h-24 rounded-full bg-purple-600 text-white text-4xl font-bold flex items-center justify-center border-4 border-purple-300 shadow-md uppercase transition duration-300 hover:scale-105">
+            {user.name?.charAt(0) || "U"}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => fileInputRef.current.click()}
+          className="absolute bottom-1 right-1 bg-purple-600 text-white rounded-full p-1 shadow hover:bg-purple-700 transition"
+          title={profilePreview ? "Change Photo" : "Add Photo"}
+        >
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+            <path
+              d="M12 16.5A4.5 4.5 0 1 0 12 7.5a4.5 4.5 0 0 0 0 9Zm7.5-4.5a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0ZM12 3v2M12 19v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          onChange={handleProfileChange}
+          className="hidden"
+        />
       </div>
-      <h2 className="text-2xl font-extrabold text-center tracking-wide mb-3 text-purple-700">
-        My Settings
-      </h2>
-      <form
-        onSubmit={handleSave}
-        className="rounded-xl shadow-lg p-6 w-full max-w-2xl border border-purple-100 bg-white/90 backdrop-blur-md"
-        style={{ background: "rgba(255,255,255,0.97)" }}
-      >
-        <table className="w-full text-left border-separate border-spacing-y-2">
-          <tbody>
-            {/* Name */}
-            <tr>
-              <td className="font-bold text-purple-700 w-32">Name</td>
+      <span className="text-purple-700 font-semibold text-xs mt-2">
+        {profilePreview ? "Change Photo" : "Add Photo"}
+      </span>
+    </div>
+
+    {/* Heading */}
+    <h2 className="text-3xl font-extrabold text-purple-700 mb-6 text-center">
+      My Account Settings
+    </h2>
+
+    {/* Settings Form */}
+    <form
+      onSubmit={handleSave}
+      className="bg-white rounded-2xl shadow-xl w-full max-w-3xl px-8 py-6 border border-purple-100"
+    >
+      <table className="w-full text-left border-separate border-spacing-y-3">
+        <tbody>
+          {/* Fields */}
+          {[
+            { label: "Name", name: "name", type: "text" },
+            { label: "Email", name: "email", type: "email" },
+            { label: "Phone", name: "phone", type: "text" },
+            { label: "DOB", name: "dob", type: "date" },
+            { label: "Gender", name: "gender", type: "select", options: ["Male", "Female", "Other"] },
+            { label: "Address", name: "address", type: "text" },
+          ].map((field) => (
+            <tr key={field.name}>
+              <td className="font-semibold text-purple-800 w-32">{field.label}</td>
               <td>
-                <input
-                  type="text"
-                  name="name"
-                  value={user.name}
-                  onChange={handleChange}
-                  className="w-full border border-purple-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-300 text-base"
-                />
+                {field.type === "select" ? (
+                  <select
+                    name={field.name}
+                    value={user[field.name]}
+                    onChange={handleChange}
+                    className="w-full border border-purple-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  >
+                    <option value="">Select</option>
+                    {field.options.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type={field.type}
+                    name={field.name}
+                    value={user[field.name]}
+                    onChange={handleChange}
+                    className="w-full border border-purple-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  />
+                )}
               </td>
             </tr>
-            {/* Email */}
-            <tr>
-              <td className="font-bold text-purple-700">Email</td>
-              <td>
-                <input
-                  type="email"
-                  name="email"
-                  value={user.email}
-                  onChange={handleChange}
-                  className="w-full border border-purple-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-300 text-base"
-                />
-              </td>
-            </tr>
-            {/* Phone */}
-            <tr>
-              <td className="font-bold text-purple-700">Phone</td>
-              <td>
-                <input
-                  type="text"
-                  name="phone"
-                  value={user.phone}
-                  onChange={handleChange}
-                  className="w-full border border-purple-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-300 text-base"
-                />
-              </td>
-            </tr>
-            
-            {/* Date of Birth */}
-            <tr>
-              <td className="font-bold text-purple-700">DOB</td>
-              <td>
-                <input
-                  type="date"
-                  name="dob"
-                  value={user.dob}
-                  onChange={handleChange}
-                  className="w-full border border-purple-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-300 text-base"
-                />
-              </td>
-            </tr>
-            {/* Gender */}
-            <tr>
-              <td className="font-bold text-purple-700">Gender</td>
-              <td>
-                <select
-                  name="gender"
-                  value={user.gender}
-                  onChange={handleChange}
-                  className="w-full border border-purple-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-300 text-base"
-                >
-                  <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </td>
-            </tr>
-            {/* Address */}
-            <tr>
-              <td className="font-bold text-purple-700">Address</td>
-              <td>
-                <input
-                  type="text"
-                  name="address"
-                  value={user.address}
-                  onChange={handleChange}
-                  className="w-full border border-purple-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-300 text-base"
-                />
-              </td>
-            </tr>
-            {/* Notifications */}
-            <tr>
-              <td className="font-bold text-purple-700">Notifications</td>
-              <td>
+          ))}
+
+          {/* Notifications */}
+          <tr>
+            <td className="font-semibold text-purple-800">Notifications</td>
+            <td>
+              <label className="inline-flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   name="notifications"
                   checked={user.notifications}
                   onChange={handleChange}
-                  id="notifications"
                   className="accent-purple-600 w-4 h-4"
                 />
-                <label htmlFor="notifications" className="ml-2 text-purple-700 font-bold text-sm">
-                  Enable Notifications
-                </label>
-              </td>
-            </tr>
-            {/* Change Password */}
-            <tr>
-              <td className="font-bold text-purple-700 align-top">Password</td>
-              <td>
-                <div className="flex gap-2">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    value={user.password}
-                    onChange={handleChange}
-                    placeholder="New Password"
-                    className="w-full border border-purple-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-300 text-base"
-                    autoComplete="new-password"
-                  />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="confirmPassword"
-                    value={user.confirmPassword}
-                    onChange={handleChange}
-                    placeholder="Confirm Password"
-                    className="w-full border border-purple-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-300 text-base"
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={toggleShowPassword}
-                    className="px-2 py-1 rounded bg-purple-100 text-purple-700 font-bold hover:bg-purple-200 transition text-xs"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        {/* Save Button */}
-        <button
-          type="submit"
-          disabled={loading}
-          className={`mt-4 bg-gradient-to-r from-purple-600 to-blue-500 text-white px-6 py-2 rounded-lg font-bold text-base hover:from-purple-700 hover:to-blue-600 transition w-full shadow ${
-            loading ? "opacity-60 cursor-not-allowed" : ""
+                <span className="text-purple-600 font-semibold">Enable Notifications</span>
+              </label>
+            </td>
+          </tr>
+
+          {/* Passwords */}
+          <tr>
+            <td className="font-semibold text-purple-800 align-top">Password</td>
+            <td>
+              <div className="flex gap-2">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={user.password}
+                  onChange={handleChange}
+                  placeholder="New Password"
+                  className="w-full border border-purple-300 rounded px-3 py-2"
+                />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  value={user.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="Confirm Password"
+                  className="w-full border border-purple-300 rounded px-3 py-2"
+                />
+                <button
+                  type="button"
+                  onClick={toggleShowPassword}
+                  className="bg-purple-200 px-2 py-1 rounded font-semibold text-purple-700 hover:bg-purple-300"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* Save Button */}
+      <button
+        type="submit"
+        disabled={loading}
+        className={`mt-6 bg-gradient-to-r from-purple-600 to-blue-500 text-white px-6 py-2 rounded-xl font-bold shadow-md hover:from-purple-700 hover:to-blue-600 transition w-full ${
+          loading ? "opacity-60 cursor-not-allowed" : ""
+        }`}
+      >
+        {loading ? "Saving..." : "Save Settings"}
+      </button>
+
+      {/* Message */}
+      {message && (
+        <div
+          className={`text-center mt-3 font-semibold ${
+            message.includes("not match") ? "text-red-600" : "text-green-600"
           }`}
         >
-          {loading ? "Saving..." : "Save Settings"}
-        </button>
-        {/* Message */}
-        {message && (
-          <div
-            className={`text-center mt-3 font-semibold ${
-              message.includes("not match") ? "text-red-600" : "text-green-600"
-            }`}
-          >
-            {message}
-          </div>
-        )}
-      </form>
-      <div className="text-xs text-blue-800 mt-2 text-center">
-        Tip: Update your profile photo, info, and password here.<br />
-        All changes reflect instantly in your sidebar and profile.
-      </div>
+          {message}
+        </div>
+      )}
+    </form>
+
+    {/* Danger Zone */}
+    <div className="mt-9 w-full max-w-2xl bg-red-25">
+       
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="bg-gradient-to-r from-red-600 to-pink-500 text-white px-6 py-2 rounded-full font-bold text-base hover:from-red-700 hover:to-pink-600 transition w-full shadow-md"
+      >
+        Logout
+      </button>
     </div>
-  );
+
+    {/* Tip */}
+    <div className="text-xs text-purple-800 mt-6 text-center">
+      Tip: Update your profile info and photo. Changes will instantly reflect in your dashboard and sidebar.
+    </div>
+  </div>
+);
+
 };
 
 export default Settings;

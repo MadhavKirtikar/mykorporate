@@ -10,7 +10,7 @@ import java.util.List;
 public class EmployeeController {
     private final EmployeeRepository repo;
     public EmployeeController(EmployeeRepository repo) { this.repo = repo; }
-
+    
     @GetMapping
     public List<Employee> getAll() { return repo.findAll(); }
 

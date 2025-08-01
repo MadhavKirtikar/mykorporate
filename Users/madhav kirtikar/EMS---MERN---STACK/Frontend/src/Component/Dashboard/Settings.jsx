@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { NavLink, useLocation } from 'react-router-dom';
 
+  // true: dummy data, false: backend data
 // Helper to get initials from name
 function getInitials(name) {
   if (!name) return "";
@@ -10,6 +11,7 @@ function getInitials(name) {
   if (parts.length === 1) return parts[0][0].toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
+
 
 // --- AdminSidebar Component (inline for this file) ---
 const AdminSidebar = ({ profilePicUrl, adminNameProp }) => {
@@ -308,9 +310,10 @@ const Settings = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("role");
-    navigate("/");
-  };
+  localStorage.removeItem("role");
+  localStorage.removeItem("token"); // ✅ Important
+  navigate("/login");               // ✅ Cleaner UX
+};
 
   const handleDeleteAccount = () => {
     setShowDeleteModal(true);
